@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev:api": "cd api && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd api && npm install && cd ../frontend && npm install",
+    "test": "cd infra && ./test.sh",
+    "test:sam": "cd infra && sam validate --template-file instance.infra.sam.yaml && sam build --template-file instance.infra.sam.yaml",
+    "test:local": "cd infra && sam local start-api --template-file instance.infra.sam.yaml --port 3001"
   },
   "repository": {
     "type": "git",
@@ -15,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/sixLUKEY/little-fire-flames/issues"
   },
-  "homepage": "https://github.com/sixLUKEY/little-fire-flames#readme"
+  "homepage": "https://github.com/sixLUKEY/little-fire-flames#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
 }

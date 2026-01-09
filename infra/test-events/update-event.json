@@ -1,0 +1,34 @@
+{
+  "version": "2.0",
+  "routeKey": "PUT /events/{id}",
+  "rawPath": "/events/test-id-123",
+  "rawQueryString": "",
+  "headers": {
+    "accept": "application/json",
+    "content-type": "application/json"
+  },
+  "pathParameters": {
+    "id": "test-id-123"
+  },
+  "body": "{\"name\":\"Updated Event\",\"description\":\"This is an updated test event\"}",
+  "requestContext": {
+    "accountId": "123456789012",
+    "apiId": "test-api",
+    "domainName": "test.execute-api.us-east-1.amazonaws.com",
+    "domainPrefix": "test",
+    "http": {
+      "method": "PUT",
+      "path": "/events/test-id-123",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "test-agent"
+    },
+    "requestId": "test-request-id",
+    "routeKey": "PUT /events/{id}",
+    "stage": "$default",
+    "time": "01/Jan/2024:00:00:00 +0000",
+    "timeEpoch": 1704067200000
+  },
+  "isBase64Encoded": false
+}
+

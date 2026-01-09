@@ -6,16 +6,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Link } from "react-router-dom";
 import { Flame, ArrowLeft, Plus, Pencil, Trash2, X, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-}
+import {
+  fetchEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  type Event,
+} from "@/lib/api";
 
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
@@ -25,24 +26,32 @@ const Events = () => {
   });
   const { toast } = useToast();
 
-  // Load events from localStorage on mount
+  // Load events from API on mount
   useEffect(() => {
-    const stored = localStorage.getItem("littleFireFlamesEvents");
-    if (stored) {
-      setEvents(JSON.parse(stored));
-    }
+    loadEvents();
   }, []);
 
-  // Save events to localStorage whenever they change
-  useEffect(() => {
-    if (events.length > 0 || localStorage.getItem("littleFireFlamesEvents")) {
-      localStorage.setItem("littleFireFlamesEvents", JSON.stringify(events));
+  const loadEvents = async () => {
+    try {
+      setIsLoading(true);
+      const loadedEvents = await fetchEvents();
+      setEvents(loadedEvents);
+    } catch (error) {
+      console.error("Error loading events:", error);
+      toast({
+        title: "Error",
+        description:
+          "Failed to load events. Make sure the API server is running.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, [events]);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.description) {
       toast({
         title: "Missing Information",
@@ -52,34 +61,41 @@ const Events = () => {
       return;
     }
 
-    if (editingEvent) {
-      // Update existing event
-      setEvents(events.map(event => 
-        event.id === editingEvent.id 
-          ? { ...event, ...formData }
-          : event
-      ));
+    try {
+      if (editingEvent) {
+        // Update existing event
+        const updated = await updateEvent(editingEvent.id, formData);
+        setEvents(
+          events.map((event) =>
+            event.id === editingEvent.id ? updated : event,
+          ),
+        );
+        toast({
+          title: "Event Updated",
+          description: "The event has been successfully updated",
+        });
+      } else {
+        // Create new event
+        const newEvent = await createEvent(formData);
+        setEvents([...events, newEvent]);
+        toast({
+          title: "Event Created",
+          description: "New event has been added successfully",
+        });
+      }
+
+      // Reset form
+      setFormData({ title: "", description: "", image: "" });
+      setEditingEvent(null);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving event:", error);
       toast({
-        title: "Event Updated",
-        description: "The event has been successfully updated",
-      });
-    } else {
-      // Add new event
-      const newEvent: Event = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setEvents([...events, newEvent]);
-      toast({
-        title: "Event Created",
-        description: "New event has been added successfully",
+        title: "Error",
+        description: "Failed to save event. Please try again.",
+        variant: "destructive",
       });
     }
-
-    // Reset form
-    setFormData({ title: "", description: "", image: "" });
-    setEditingEvent(null);
-    setIsEditing(false);
   };
 
   const handleEdit = (event: Event) => {
@@ -93,12 +109,22 @@ const Events = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = (id: string) => {
-    setEvents(events.filter(event => event.id !== id));
-    toast({
-      title: "Event Deleted",
-      description: "The event has been removed",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteEvent(id);
+      setEvents(events.filter((event) => event.id !== id));
+      toast({
+        title: "Event Deleted",
+        description: "The event has been removed",
+      });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -117,7 +143,7 @@ const Events = () => {
             <Flame className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl">Little Fire Flames</span>
           </Link>
-          <Button 
+          <Button
             onClick={() => setIsEditing(!isEditing)}
             variant={isEditing ? "outline" : "default"}
           >
@@ -139,7 +165,7 @@ const Events = () => {
       <div className="container mx-auto px-4 pt-24 pb-16">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Upcoming Events</h1>
+            <h1 className="text-4xl font-bold mb-4">Past & Upcoming Events</h1>
             <p className="text-lg text-muted-foreground">
               Stay updated with our exciting activities and special occasions
             </p>
@@ -159,7 +185,9 @@ const Events = () => {
                     </label>
                     <Input
                       value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
                       placeholder="Enter event title"
                       className="rounded-lg"
                     />
@@ -171,7 +199,12 @@ const Events = () => {
                     </label>
                     <Textarea
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
                       placeholder="Describe the event..."
                       className="rounded-lg min-h-[120px]"
                     />
@@ -183,7 +216,9 @@ const Events = () => {
                     </label>
                     <Input
                       value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, image: e.target.value })
+                      }
                       placeholder="https://example.com/image.jpg or leave empty for default"
                       className="rounded-lg"
                     />
@@ -194,9 +229,9 @@ const Events = () => {
                       <Save className="h-4 w-4 mr-2" />
                       {editingEvent ? "Update Event" : "Create Event"}
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={handleCancel}
                       className="rounded-full"
                     >
@@ -209,7 +244,16 @@ const Events = () => {
           )}
 
           {/* Events List */}
-          {events.length === 0 ? (
+          {isLoading ? (
+            <Card className="rounded-2xl border-2">
+              <CardContent className="p-12 text-center">
+                <Flame className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4 animate-pulse" />
+                <h3 className="text-xl font-semibold mb-2">
+                  Loading Events...
+                </h3>
+              </CardContent>
+            </Card>
+          ) : events.length === 0 ? (
             <Card className="rounded-2xl border-2 border-dashed">
               <CardContent className="p-12 text-center">
                 <Flame className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
@@ -217,7 +261,10 @@ const Events = () => {
                 <p className="text-muted-foreground mb-6">
                   Start by adding your first event to keep parents informed
                 </p>
-                <Button onClick={() => setIsEditing(true)} className="rounded-full">
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-full"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First Event
                 </Button>
@@ -226,12 +273,15 @@ const Events = () => {
           ) : (
             <div className="space-y-6">
               {events.map((event) => (
-                <Card key={event.id} className="rounded-2xl border-2 hover:border-primary/50 transition-all overflow-hidden animate-fade-in">
+                <Card
+                  key={event.id}
+                  className="rounded-2xl border-2 hover:border-primary/50 transition-all overflow-hidden animate-fade-in"
+                >
                   <div className="md:flex">
                     <div className="md:w-1/3 aspect-video md:aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
                       {event.image ? (
-                        <img 
-                          src={event.image} 
+                        <img
+                          src={event.image}
                           alt={event.title}
                           className="w-full h-full object-cover"
                         />
