@@ -1,0 +1,35 @@
+<div class="teachers space-y-4">
+  <h3 class="text-xl font-semibold">Teachers</h3>
+  
+  <div class="flex gap-2 flex-wrap">
+    <button 
+      (click)="dialogService.show('createTeacher')"
+      class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+    >
+      Create Teacher
+    </button>
+    <button 
+      (click)="dialogService.show('updateTeacher')"
+      class="px-4 py-2 rounded-md bg-yellow-600 text-white hover:bg-yellow-700"
+    >
+      Update Teacher
+    </button>
+    <button 
+      (click)="dialogService.show('deleteTeacher')"
+      class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+    >
+      Delete Teacher
+    </button>
+    <button 
+      (click)="displayEntity()"
+      class="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700"
+    >
+      Display Teachers
+    </button>
+  </div>
+
+  <div class="response-display mt-6">
+    <h3 class="text-lg font-semibold mb-2">Response:</h3>
+    <pre class="bg-gray-100 p-4 rounded-md overflow-auto">{{ textToDisplay() }}</pre>
+  </div>
+</div>

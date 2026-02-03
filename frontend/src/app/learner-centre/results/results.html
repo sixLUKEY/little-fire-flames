@@ -1,0 +1,98 @@
+<div class="results p-6 space-y-6">
+  <h3 class="text-xl font-semibold">Manage Learner Results</h3>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+    <div class="space-y-2">
+      <label class="block text-sm font-medium">
+        Select Class
+        <select
+          formControlName="classId"
+          (change)="onClassSelected()"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        >
+          <option value="">-- Select a class --</option>
+          @for (cls of classes(); track cls.classId) {
+            <option [value]="cls.classId">{{ cls.name }} ({{ cls.classId }})</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (selectedClass()) {
+      <div class="space-y-2">
+        <label class="block text-sm font-medium">
+          Select Learner
+          <select
+            formControlName="studentId"
+            (change)="onLearnerSelected()"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            [disabled]="learners().length === 0"
+          >
+            <option value="">-- Select a learner --</option>
+            @for (learner of learners(); track learner.studentId) {
+              <option [value]="learner.studentId">{{ learner.name }} ({{ learner.studentId }})</option>
+            }
+          </select>
+        </label>
+        @if (learners().length === 0) {
+          <p class="text-sm text-gray-500 mt-1">No learners found in this class</p>
+        }
+      </div>
+    }
+
+    @if (selectedLearner() && resultsArray.length > 0) {
+        <div class="border-t pt-4">
+          <h4 class="text-lg font-semibold mb-4">Subject Results for {{ selectedLearner()?.name }}</h4>
+
+          <div class="space-y-4">
+            @for (subject of classSubjects(); track subject.subjectId; let i = $index) {
+              <div class="border border-gray-200 rounded-lg p-4 space-y-3">
+                <h5 class="font-medium">{{ subject.name }}</h5>
+                <p class="text-sm text-gray-600">{{ subject.description }}</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">
+                      Result (Score)
+                      <input
+                        type="number"
+                        [formControl]="getResultControl(i)"
+                        min="0"
+                        max="100"
+                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      />
+                    </label>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium mb-1">
+                      Feedback
+                      <textarea
+                        [formControl]="getFeedbackControl(i)"
+                        rows="3"
+                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                        placeholder="Enter feedback for this subject..."
+                      ></textarea>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="flex gap-2 justify-end mt-6">
+            <button
+              type="submit"
+              class="px-6 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Save Results
+            </button>
+          </div>
+        </div>
+    }
+
+    @if (loading()) {
+      <p class="text-sm text-gray-500">Loading...</p>
+    }
+  </form>
+</div>

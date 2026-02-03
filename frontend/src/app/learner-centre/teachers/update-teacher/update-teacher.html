@@ -1,0 +1,17 @@
+<dialog #dialogRef>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <label>
+      name for learner
+      <input formControlName="name" type="text" />
+    </label>
+    <label>
+      subject Id
+      <input formControlName="subjectId" type="text" />
+    </label>
+    <label>
+      classId for learner
+      <input formControlName="classId" type="text" />
+    </label>
+    <button type="submit">submit</button>
+  </form>
+</dialog>

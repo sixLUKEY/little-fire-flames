@@ -1,105 +1,121 @@
-import express from "express";
-import cors from "cors";
-import { getAllEvents } from "./db/events";
-import { getEventById } from "./db/events";
-import { createEvent } from "./db/events";
-import { updateEvent } from "./db/events";
-import { deleteEvent } from "./db/events";
-import { CreateEventRequest, UpdateEventRequest } from "./types/event";
+import express from 'express';
+import cors from 'cors';
+import { routes } from './routes/routes';
+import { sequelize } from './db';
+import './db/models/learner.model';
+import './db/models/class.model';
+import './db/models/subjects.model';
+import './db/models/teachers.model';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// GET /events - List all events
-app.get("/events", async (req, res) => {
+// Debug: Log all registered routes
+console.log('\n📋 Registering routes:');
+
+// Convert route definitions to Express routes
+routes.forEach((route) => {
+  const expressMethod = route.httpMethod.toLowerCase();
+  const path = route.resourcePath.replace(/{(\w+)}/g, ':$1');
+
+  console.log(`  ${expressMethod.toUpperCase().padEnd(6)} ${path}`);
+
+  // Properly register Express routes using the method directly
+  switch (expressMethod) {
+    case 'get':
+      app.get(path, async (req: express.Request, res: express.Response) => {
+        try {
+          const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+          const params = { id };
+          const result = await route.handler({ params, body: req.body, event: req as any });
+          res.status(result.statusCode).json(result.body);
+        } catch (error) {
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      });
+      break;
+    case 'post':
+      app.post(path, async (req: express.Request, res: express.Response) => {
+        console.log('CALLED POST');
+        try {
+          // For POST, extract id from body or params
+          const paramId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+          const params = {
+            id: req.body?.studentId || req.body?.id || req.body?.classId || req.body?.subjectId || req.body?.teacherId || paramId,
+          };
+          const result = await route.handler({ params, body: req.body, event: req as any });
+          res.status(result.statusCode).json(result.body);
+        } catch (error) {
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      });
+      break;
+    case 'put':
+      app.put(path, async (req: express.Request, res: express.Response) => {
+        try {
+          const paramId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+          const params = {
+            id: paramId || req.body?.studentId || req.body?.id || req.body?.classId || req.body?.subjectId || req.body?.teacherId,
+          };
+          const result = await route.handler({ params, body: req.body, event: req as any });
+          res.status(result.statusCode).json(result.body);
+        } catch (error) {
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      });
+      break;
+    case 'delete':
+      app.delete(path, async (req: express.Request, res: express.Response) => {
+        try {
+          const paramId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+          const params = { 
+            id: paramId || req.body?.studentId || req.body?.id || req.body?.classId || req.body?.subjectId || req.body?.teacherId 
+          };
+          const result = await route.handler({ params, body: req.body, event: req as any });
+          res.status(result.statusCode).json(result.body);
+        } catch (error) {
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      });
+      break;
+    default:
+      console.warn(`⚠️  Unsupported HTTP method: ${expressMethod}`);
+  }
+});
+
+console.log('');
+
+// Debug endpoint to verify routes
+app.get('/debug/routes', (req, res) => {
+  const routeList = routes.map((route) => ({
+    method: route.httpMethod,
+    path: route.resourcePath,
+    expressPath: route.resourcePath.replace(/{(\w+)}/g, ':$1'),
+  }));
+  res.json({ routes: routeList, total: routeList.length });
+});
+
+// Initialize database and start server
+async function start() {
   try {
-    const events = await getAllEvents();
-    res.json({ events });
+    await sequelize.authenticate();
+    console.log('✅ Database connection established');
+
+    // Sync models (creates tables if they don't exist)
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database models synced');
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🔍 Debug routes at http://localhost:${PORT}/debug/routes\n`);
+    });
   } catch (error) {
-    console.error("Error fetching events:", error);
-    res.status(500).json({ error: "Failed to fetch events" });
+    console.error('❌ Unable to start server:', error);
+    process.exit(1);
   }
-});
+}
 
-// GET /events/:id - Get a specific event
-app.get("/events/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const event = await getEventById(id);
-
-    if (!event) {
-      return res.status(404).json({ error: "Event not found" });
-    }
-
-    res.json({ event });
-  } catch (error) {
-    console.error("Error fetching event:", error);
-    res.status(500).json({ error: "Failed to fetch event" });
-  }
-});
-
-// POST /events - Create a new event
-app.post("/events", async (req, res) => {
-  try {
-    const body = req.body as CreateEventRequest;
-
-    if (!body.name || !body.description) {
-      return res.status(400).json({ error: "Name and description are required" });
-    }
-
-    const newEvent = await createEvent(body);
-    res.status(201).json({ event: newEvent });
-  } catch (error) {
-    console.error("Error creating event:", error);
-    res.status(500).json({ error: "Failed to create event" });
-  }
-});
-
-// PUT /events/:id - Update an event
-app.put("/events/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const body = req.body as UpdateEventRequest;
-
-    const updatedEvent = await updateEvent(id, body);
-
-    if (!updatedEvent) {
-      return res.status(404).json({ error: "Event not found" });
-    }
-
-    res.json({ event: updatedEvent });
-  } catch (error) {
-    console.error("Error updating event:", error);
-    res.status(500).json({ error: "Failed to update event" });
-  }
-});
-
-// DELETE /events/:id - Delete an event
-app.delete("/events/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deleted = await deleteEvent(id);
-
-    if (!deleted) {
-      return res.status(404).json({ error: "Event not found" });
-    }
-
-    res.json({ message: "Event deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting event:", error);
-    res.status(500).json({ error: "Failed to delete event" });
-  }
-});
-
-app.listen(PORT, () => {
-  const useLocalDb = process.env.USE_LOCAL_DB !== "false" && !process.env.AWS_LAMBDA_FUNCTION_NAME;
-  console.log(`🚀 Local API server running on http://localhost:${PORT}`);
-  console.log(`📁 Using ${useLocalDb ? "local file database (data/events.db.txt)" : "DynamoDB"}`);
-  if (useLocalDb) {
-    console.log(`✅ No AWS credentials required for local development`);
-  }
-});
-
+start();

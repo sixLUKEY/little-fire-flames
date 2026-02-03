@@ -1,0 +1,54 @@
+<div class="px-32 bg-red-50 w-full h-full">
+  <div class="flex flex-col gap-16">
+    <div class="flex justify-between items-end">
+      <span class="text-5xl font-bold">Parent's corner</span>
+      <span class="text-2xl">Someones's name</span>
+    </div>
+    <div>
+      <div class="meta"></div>
+      <div class="feedback">
+        <div class="overall flex justify-between">
+          <div class="term flex flex-col">
+            <div class="term-meta flex">
+              <span>Term 2</span>
+              <span>8 March - 6 June</span>
+            </div>
+            <div class="progress">overall progress: GOOD</div>
+          </div>
+          <div class="feedback-block bg-white max-w-[800px]">
+            <span class="text-xl">
+              Lorem ipsum dolor sit amet consectetur. Id consectetur curabitur viverra etiam
+              facilisi. Lacus amet quis varius commodo rhoncus hendrerit quam suscipit. Sit nisl
+              quam eu mi gravida mauris lorem feugiat. Cursus eleifend ultrices vulputate non sed
+              non. Lobortis maecenas elementum nibh.</span
+            >
+          </div>
+        </div>
+        <div class="subjects mt-6">
+          <table class="w-full border-collapse bg-white rounded-lg overflow-hidden shadow">
+            <thead>
+              <tr class="bg-red-100 border-b border-red-200">
+                <th class="text-left py-3 px-4 font-semibold">Subject</th>
+                <th class="text-left py-3 px-4 font-semibold">Grade</th>
+                <th class="text-left py-3 px-4 font-semibold">Feedback</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (result of subjectResults; track result.subject) {
+                <tr class="border-b border-gray-100 hover:bg-red-50/50">
+                  <td class="py-3 px-4">{{ result.subject }}</td>
+                  <td class="py-3 px-4 font-medium">{{ result.grade }}</td>
+                  <td class="py-3 px-4">{{ result.feedback }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="buttons flex gap-3">
+      <button>Curriculum Overview</button>
+      <button>Download Pdf</button>
+    </div>
+  </div>
+</div>

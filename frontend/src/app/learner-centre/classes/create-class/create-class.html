@@ -1,0 +1,78 @@
+<dialog #dialogRef class="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+    <h2 class="text-xl font-semibold mb-4">Create Class</h2>
+    
+    <div class="space-y-2">
+      <label class="block text-sm font-medium">
+        Name
+        <input 
+          formControlName="name" 
+          type="text" 
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          required
+        />
+      </label>
+    </div>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium">
+        Teacher
+        <select 
+          formControlName="teacherId" 
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          required
+        >
+          <option value="">Select a teacher</option>
+          @for (teacher of teachers(); track teacher.teacherId) {
+            <option [value]="teacher.teacherId">{{ teacher.name }} ({{ teacher.teacherId }})</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium mb-2">
+        Subjects
+      </label>
+      <div class="border border-gray-300 rounded-md p-3 max-h-48 overflow-y-auto">
+        @if (subjects().length === 0) {
+          <p class="text-sm text-gray-500">Loading subjects...</p>
+        } @else {
+          <div class="space-y-2">
+            @for (subject of subjects(); track subject.subjectId; let i = $index) {
+              <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                <input 
+                  type="checkbox"
+                  [formControl]="getSubjectControl(i)"
+                  class="rounded border-gray-300"
+                />
+                <div>
+                  <div class="font-medium">{{ subject.name }}</div>
+                  <div class="text-xs text-gray-500">{{ subject.description }}</div>
+                </div>
+              </label>
+            }
+          </div>
+        }
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Select one or more subjects for this class</p>
+    </div>
+
+    <div class="flex gap-2 justify-end mt-6">
+      <button 
+        type="button" 
+        (click)="closeDialog()"
+        class="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
+      >
+        Cancel
+      </button>
+      <button 
+        type="submit" 
+        [disabled]="form.invalid"
+        class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Submit
+      </button>
+    </div>
+  </form>
+</dialog>
