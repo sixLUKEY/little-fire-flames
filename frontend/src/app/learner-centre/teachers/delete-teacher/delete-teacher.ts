@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from 'src/app/api/api.service';
+import { DialogService } from 'src/app/common/dialog/dialog.service';
 import { AbstractDialog } from 'src/app/common/dialog/abstract-dialog';
 import type { TeacherResponseDto } from '@api/types';
 
@@ -14,6 +15,7 @@ import type { TeacherResponseDto } from '@api/types';
 export class DeleteTeacher extends AbstractDialog implements OnInit {
   private readonly apiService = inject(ApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly dialogService = inject(DialogService);
 
   protected teachers = signal<TeacherResponseDto[]>([]);
 
@@ -23,7 +25,11 @@ export class DeleteTeacher extends AbstractDialog implements OnInit {
 
   ngOnInit() {
     this.apiService.getTeachers().subscribe({
-      next: (r) => this.teachers.set(r.data),
+      next: (r) => {
+        this.teachers.set(r.data);
+        const initialId = this.dialogService.getInitialEntityId();
+        if (initialId) this.form.patchValue({ teacherId: initialId });
+      },
       error: (e) => console.error('Error loading teachers:', e),
     });
   }

@@ -45,12 +45,14 @@ export const MODAL_TYPE_COMPONENT_MAP: Record<DialogType, Type<AbstractDialog>> 
 @Injectable({ providedIn: 'root' })
 export class DialogService {
   private componentRef: ComponentRef<any> | null = null;
+  private initialEntityId: string | undefined;
   private readonly document = inject(DOCUMENT);
   private readonly appRef = inject(ApplicationRef);
   private readonly environmentInjector = inject(EnvironmentInjector);
 
-  show(dialogType: DialogType): ComponentRef<any> | null {
+  show(dialogType: DialogType, initialEntityId?: string): ComponentRef<any> | null {
     this.close();
+    this.initialEntityId = initialEntityId;
 
     const component = MODAL_TYPE_COMPONENT_MAP[dialogType];
 
@@ -81,5 +83,14 @@ export class DialogService {
       this.componentRef.destroy();
       this.componentRef = null;
     }
+    this.initialEntityId = undefined;
+  }
+
+  /**
+   * Returns the entity ID passed when opening the dialog (e.g. from list page selection).
+   * Dialogs can use this to preselect the entity. Cleared when dialog is closed.
+   */
+  getInitialEntityId(): string | undefined {
+    return this.initialEntityId;
   }
 }

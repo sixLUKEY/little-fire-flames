@@ -1,34 +1,36 @@
 <div class="learner-centre">
   <nav class="learner-centre-subnav">
-    <a
-      routerLink="/learner-centre/learners"
-      routerLinkActive="subnav-active"
-      [routerLinkActiveOptions]="{ exact: false }"
-      class="subnav-link"
-    >
-      Learners
-    </a>
-    <a
-      routerLink="/learner-centre/classes"
-      routerLinkActive="subnav-active"
-      class="subnav-link"
-    >
-      Classes
-    </a>
-    <a
-      routerLink="/learner-centre/subjects"
-      routerLinkActive="subnav-active"
-      class="subnav-link"
-    >
-      Subjects
-    </a>
-    <a
-      routerLink="/learner-centre/teachers"
-      routerLinkActive="subnav-active"
-      class="subnav-link"
-    >
-      Teachers
-    </a>
+    @if (auth.hasRole('principal')) {
+      <a
+        routerLink="/learner-centre/learners"
+        routerLinkActive="subnav-active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="subnav-link"
+      >
+        Learners
+      </a>
+      <a
+        routerLink="/learner-centre/classes"
+        routerLinkActive="subnav-active"
+        class="subnav-link"
+      >
+        Classes
+      </a>
+      <a
+        routerLink="/learner-centre/subjects"
+        routerLinkActive="subnav-active"
+        class="subnav-link"
+      >
+        Subjects
+      </a>
+      <a
+        routerLink="/learner-centre/teachers"
+        routerLinkActive="subnav-active"
+        class="subnav-link"
+      >
+        Teachers
+      </a>
+    }
     <a
       routerLink="/learner-centre/results"
       routerLinkActive="subnav-active"

@@ -1,13 +1,31 @@
 <div class="lff-page-inner">
   <h2 class="lff-page-title">Subjects</h2>
-  <div class="lff-pane-grid">
-    <button type="button" class="lff-pane lff-pane-create" (click)="dialogService.show('createSubject')">Create Subject</button>
-    <button type="button" class="lff-pane lff-pane-update" (click)="dialogService.show('updateSubject')">Update Subject</button>
-    <button type="button" class="lff-pane lff-pane-delete" (click)="dialogService.show('deleteSubject')">Delete Subject</button>
-    <button type="button" class="lff-pane lff-pane-display" (click)="displayEntity()">Display Subjects</button>
+
+  <div class="lff-entity-actions">
+    <button type="button" class="lff-pane lff-pane-create" (click)="dialogService.show('createSubject')">Add Subject</button>
   </div>
-  <div class="lff-response-box">
-    <h3 class="lff-response-title">Response</h3>
-    <pre class="lff-response-content">{{ textToDisplay() }}</pre>
-  </div>
+
+  <section class="lff-entity-list-section">
+    <h3 class="lff-entity-list-title">Manage subjects</h3>
+    <div class="lff-entity-select-row">
+      <label class="lff-entity-select-label" for="subject-select">Select subject</label>
+      <select
+        id="subject-select"
+        class="lff-entity-select"
+        [ngModel]="selectedId()"
+        (ngModelChange)="selectedId.set($event)"
+      >
+        <option value="">— Select a subject —</option>
+        @for (s of entities(); track s.subjectId) {
+          <option [value]="s.subjectId">{{ s.name }} ({{ s.subjectId }})</option>
+        }
+      </select>
+    </div>
+    @if (selectedId(); as id) {
+      <div class="lff-entity-actions-inline">
+        <button type="button" class="lff-btn lff-btn-update" (click)="openUpdate(id)">Update</button>
+        <button type="button" class="lff-btn lff-btn-delete" (click)="openDelete(id)">Delete</button>
+      </div>
+    }
+  </section>
 </div>

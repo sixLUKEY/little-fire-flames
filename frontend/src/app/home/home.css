@@ -340,18 +340,13 @@
 
 /* Contact */
 .home-contact-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   background: var(--lff-surface-elevated);
   border: 2px solid var(--lff-border);
   border-radius: 1rem;
   padding: 2rem;
-}
-
-.home-contact-block {
-  margin-bottom: 1.25rem;
-}
-
-.home-contact-block:last-of-type {
-  margin-bottom: 1.5rem;
 }
 
 .home-contact-label {

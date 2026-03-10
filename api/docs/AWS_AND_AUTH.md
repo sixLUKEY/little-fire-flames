@@ -31,7 +31,8 @@
 ## Auth (token-based)
 
 - **Goal**: Only allow valid API requests when the user is logged in (token required).
-- **Login**: `POST /v1/auth/login` returns a token (placeholder implementation in `auth/loginHandler.ts`). Replace with real credentials + JWT sign (e.g. Cognito, or your own user store + `jsonwebtoken`).
+- **Login**: `POST /v1/auth/login` with `{ "email", "password" }` returns a token. Roles are **teacher** and **principal** only; parents view results via Parents Corner by entering their child's student ID (no login).
+- **Dummy users** (see `auth/loginHandler.ts`): `principal@school.com` / `principal123` (full access), `teacher@school.com` / `teacher123` (results only). Replace with Cognito or your user store in production.
 - **Protected routes**: Validate `Authorization: Bearer <token>` on every request.
 
 ### Express (local)
@@ -46,7 +47,16 @@
 
 ### Types
 
-- `auth/types.ts`: `JwtPayload`, `AuthContext`, `AuthorizerContext` for request-scoped auth data.
+- `auth/types.ts`: `JwtPayload`, `AuthContext`, `AuthorizerContext`, `UserRole` for request-scoped auth data.
+- Login response includes `role: 'parent' | 'teacher' | 'principal'` for tiered access. Frontend uses this to show/hide routes and nav.
+- Placeholder login: use `principal@example.com`, `teacher@example.com`, or `parent@example.com` (password ignored) to get the corresponding role.
+
+### AWS Cognito (production)
+
+- Use Cognito User Pools for sign-in; store role in a **custom attribute** (e.g. `custom:role`) or in **Cognito groups** (e.g. `Principal`, `Teacher`, `Parent`).
+- After Cognito sign-in, exchange the Id token (or use it as Bearer token) with your API. Lambda authorizer should validate the Cognito JWT and pass `userId`, `email`, and `role` (from custom attribute or group) in the authorizer context.
+- Backend: replace `loginHandler` with a call to Cognito (e.g. `InitiateAuth` or use Amplify/Cognito hosted UI and have frontend send the Id token to your API to register the session). Alternatively, keep a thin `POST /v1/auth/login` that accepts Cognito Id token and returns a short-lived API token that includes the role.
+- Frontend: replace `ApiService.login(credentials)` with Cognito Amplify sign-in or Cognito SDK; then send the Id token to your backend if you issue your own API token, or use the Id token as the Bearer token and configure API Gateway to accept it in the Lambda authorizer.
 
 ## Env (Lambda / local)
 

@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from 'src/app/api/api.service';
+import { DialogService } from 'src/app/common/dialog/dialog.service';
 import { AbstractDialog } from 'src/app/common/dialog/abstract-dialog';
 import type { SubjectResponseDto } from '@api/types';
 
@@ -14,6 +15,7 @@ import type { SubjectResponseDto } from '@api/types';
 export class DeleteSubject extends AbstractDialog implements OnInit {
   private readonly apiService = inject(ApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly dialogService = inject(DialogService);
 
   protected subjects = signal<SubjectResponseDto[]>([]);
 
@@ -23,7 +25,11 @@ export class DeleteSubject extends AbstractDialog implements OnInit {
 
   ngOnInit() {
     this.apiService.getSubjects().subscribe({
-      next: (r) => this.subjects.set(r.data),
+      next: (r) => {
+        this.subjects.set(r.data);
+        const initialId = this.dialogService.getInitialEntityId();
+        if (initialId) this.form.patchValue({ subjectId: initialId });
+      },
       error: (e) => console.error('Error loading subjects:', e),
     });
   }

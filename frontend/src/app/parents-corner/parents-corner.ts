@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../api/api.service';
 import { getTermLabel } from '../learner-centre/results/term-periods';
 import type { LearnerResponseDto, SubjectResults } from '@api/types';
+import { jsPDF } from 'jspdf';
 
 @Component({
   selector: 'app-parents-corner',
@@ -100,8 +101,74 @@ export class ParentsCorner {
   protected overallProgress(subjects: SubjectResults[]): string {
     if (!subjects?.length) return '—';
     const avg = subjects.reduce((sum, r) => sum + (r.result ?? 0), 0) / subjects.length;
-    if (avg >= 75) return 'Good';
-    if (avg >= 50) return 'Satisfactory';
+    if (avg >= 5.5) return 'Good';
+    if (avg >= 3.5) return 'Satisfactory';
     return 'Needs attention';
+  }
+
+  protected downloadPdf(): void {
+    const s = this.student();
+    const entry = this.currentTermEntry();
+    if (!s || !entry) return;
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth()
+    let y = 20;
+
+    doc.setFontSize(18);
+    doc.text('Little Fire Flames', pageW / 2, y, { align: 'center' });
+    y += 8;
+    doc.setFontSize(14);
+    doc.text("Parent's Corner — Term Report", pageW / 2, y, { align: 'center' });
+    y += 14;
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Learner details', 20, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Name: ${s.name}`, 20, y);
+    y += 6;
+    doc.text(`Student ID: ${s.studentId}`, 20, y);
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Term ${entry.term} ${entry.year}`, 20, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.text(getTermLabel(entry.term, entry.year), 20, y);
+    y += 6;
+    doc.text(`Overall progress: ${this.overallProgress(entry.subjects)}`, 20, y);
+    y += 12;
+
+    if (entry.subjects?.length) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Subject results', 20, y);
+      y += 8;
+
+      const colW = (pageW - 40) / 3;
+      const headY = y;
+      doc.setFontSize(10);
+      doc.text('Subject', 20, headY);
+      doc.text('Score', 20 + colW, headY);
+      doc.text('Feedback', 20 + colW * 2, headY);
+      y += 7;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      for (const r of entry.subjects) {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        const feedback = (r.feedback ?? '—').slice(0, 50);
+        doc.text(r.name, 20, y);
+        doc.text(String(r.result != null ? r.result : '—'), 20 + colW, y);
+        doc.text(feedback, 20 + colW * 2, y);
+        y += 6;
+      }
+    }
+
+    const filename = `report-${s.studentId}-term${entry.term}-${entry.year}.pdf`;
+    doc.save(filename);
   }
 }

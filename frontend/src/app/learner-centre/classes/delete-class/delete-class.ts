@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from 'src/app/api/api.service';
+import { DialogService } from 'src/app/common/dialog/dialog.service';
 import { AbstractDialog } from 'src/app/common/dialog/abstract-dialog';
 import type { ClassResponseDto } from '@api/types';
 
@@ -14,6 +15,7 @@ import type { ClassResponseDto } from '@api/types';
 export class DeleteClass extends AbstractDialog implements OnInit {
   private readonly apiService = inject(ApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly dialogService = inject(DialogService);
 
   protected classes = signal<ClassResponseDto[]>([]);
 
@@ -23,7 +25,11 @@ export class DeleteClass extends AbstractDialog implements OnInit {
 
   ngOnInit() {
     this.apiService.getClasses().subscribe({
-      next: (r) => this.classes.set(r.data),
+      next: (r) => {
+        this.classes.set(r.data);
+        const initialId = this.dialogService.getInitialEntityId();
+        if (initialId) this.form.patchValue({ classId: initialId });
+      },
       error: (e) => console.error('Error loading classes:', e),
     });
   }

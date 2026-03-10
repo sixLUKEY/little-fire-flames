@@ -1,13 +1,31 @@
 <div class="lff-page-inner">
   <h2 class="lff-page-title">Learners</h2>
-  <div class="lff-pane-grid">
-    <button type="button" class="lff-pane lff-pane-create" (click)="dialogService.show('createLearner')">Create Learner</button>
-    <button type="button" class="lff-pane lff-pane-update" (click)="dialogService.show('updateLearner')">Update Learner</button>
-    <button type="button" class="lff-pane lff-pane-delete" (click)="dialogService.show('deleteLearner')">Delete Learner</button>
-    <button type="button" class="lff-pane lff-pane-display" (click)="displayEntity()">Display Learners</button>
+
+  <div class="lff-entity-actions">
+    <button type="button" class="lff-pane lff-pane-create" (click)="dialogService.show('createLearner')">Add Learner</button>
   </div>
-  <div class="lff-response-box">
-    <h3 class="lff-response-title">Response</h3>
-    <pre class="lff-response-content">{{ textToDisplay() }}</pre>
-  </div>
+
+  <section class="lff-entity-list-section">
+    <h3 class="lff-entity-list-title">Manage learners</h3>
+    <div class="lff-entity-select-row">
+      <label class="lff-entity-select-label" for="learner-select">Select learner</label>
+      <select
+        id="learner-select"
+        class="lff-entity-select"
+        [ngModel]="selectedId()"
+        (ngModelChange)="selectedId.set($event)"
+      >
+        <option value="">— Select a learner —</option>
+        @for (l of entities(); track l.studentId) {
+          <option [value]="l.studentId">{{ l.name }} ({{ l.studentId }})</option>
+        }
+      </select>
+    </div>
+    @if (selectedId(); as id) {
+      <div class="lff-entity-actions-inline">
+        <button type="button" class="lff-btn lff-btn-update" (click)="openUpdate(id)">Update</button>
+        <button type="button" class="lff-btn lff-btn-delete" (click)="openDelete(id)">Delete</button>
+      </div>
+    }
+  </section>
 </div>

@@ -9,26 +9,52 @@
   >
     Home
   </a>
-  <a
-    routerLink="/learner-centre/learners"
-    class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
-    [class.font-semibold]="isTeachersCornerActive()"
-    [class.nav-active]="isTeachersCornerActive()"
-  >
-    Teachers corner
-  </a>
-  <a
-    routerLink="/learner-centre/results"
-    routerLinkActive="font-semibold nav-active"
-    class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
-  >
-    Results
-  </a>
-  <a
-    routerLink="/parents-corner"
-    routerLinkActive="font-semibold nav-active"
-    class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
-  >
-    Parents Corner
-  </a>
+
+  @if (auth.currentUser(); as user) {
+    @if (user.role === 'principal') {
+      <a
+        routerLink="/learner-centre/learners"
+        class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
+        [class.font-semibold]="isTeachersCornerActive()"
+        [class.nav-active]="isTeachersCornerActive()"
+      >
+        Teachers corner
+      </a>
+    }
+    @if (user.role === 'principal' || user.role === 'teacher') {
+      <a
+        routerLink="/learner-centre/results"
+        routerLinkActive="font-semibold nav-active"
+        class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
+      >
+        Results
+      </a>
+    }
+    <a
+      routerLink="/parents-corner"
+      routerLinkActive="font-semibold nav-active"
+      class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
+    >
+      Parents Corner
+    </a>
+    <span class="navbar-user text-sm text-[var(--lff-ink-muted)] px-2">{{ user.email ?? user.role }}</span>
+    <button type="button" class="nav-link px-3 py-1.5 rounded text-sm transition-colors border-0 cursor-pointer bg-transparent" (click)="auth.logout()">
+      Sign out
+    </button>
+  } @else {
+    <a
+      routerLink="/parents-corner"
+      routerLinkActive="font-semibold nav-active"
+      class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
+    >
+      Parents Corner
+    </a>
+    <a
+      routerLink="/login"
+      routerLinkActive="font-semibold nav-active"
+      class="nav-link px-3 py-1.5 rounded text-sm transition-colors"
+    >
+      Sign in
+    </a>
+  }
 </nav>

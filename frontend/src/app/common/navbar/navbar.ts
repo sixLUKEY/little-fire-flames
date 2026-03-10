@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'lff-navbar',
@@ -9,6 +10,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class Navbar {
   protected readonly router = inject(Router);
+  protected readonly auth = inject(AuthService);
 
   protected isTeachersCornerActive(): boolean {
     return this.router.url.startsWith('/learner-centre');

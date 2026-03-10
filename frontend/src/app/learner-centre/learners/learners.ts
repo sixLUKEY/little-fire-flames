@@ -1,29 +1,34 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../api/api.service';
 import { DialogService } from '../../common/dialog/dialog.service';
-import { LearnerListResponseDto } from '@api/types';
+import type { LearnerResponseDto } from '@api/types';
 
 @Component({
   selector: 'app-learners',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './learners.html',
   styleUrl: './learners.css',
 })
-export class Learners {
+export class Learners implements OnInit {
   private readonly apiService = inject(ApiService);
-  protected textToDisplay = signal<string>('');
   protected readonly dialogService = inject(DialogService);
 
-  protected displayEntity(id?: string): void {
-    this.apiService.getLearners(id).subscribe({
-      next: (response: LearnerListResponseDto) => {
-        this.textToDisplay.set(JSON.stringify(response, null, 2));
-        console.log('learners fetched:', response);
-      },
-      error: (error: unknown) => {
-        console.error('Error fetching learners:', error);
-        this.textToDisplay.set(`Error: ${JSON.stringify(error, null, 2)}`);
-      },
+  protected entities = signal<LearnerResponseDto[]>([]);
+  protected selectedId = signal<string>('');
+
+  ngOnInit(): void {
+    this.apiService.getLearners().subscribe({
+      next: (response) => this.entities.set(response.data),
+      error: (err) => console.error('Error fetching learners:', err),
     });
+  }
+
+  protected openUpdate(studentId: string): void {
+    this.dialogService.show('updateLearner', studentId);
+  }
+
+  protected openDelete(studentId: string): void {
+    this.dialogService.show('deleteLearner', studentId);
   }
 }

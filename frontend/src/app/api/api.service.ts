@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import type {
   // Models
   LearnerModel,
@@ -31,6 +32,9 @@ import type {
   CreateClassRequest,
   UpdateClassRequest,
   ApiResponse,
+  // Auth
+  LoginRequest,
+  LoginResponse,
 } from '@api/types';
 
 @Injectable({
@@ -184,4 +188,28 @@ export class ApiService {
     );
   }
 
+  // ==================== AUTH ====================
+
+  login(data: LoginRequest): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${this.baseUrl}/v1/auth/login`, data, { observe: 'response' })
+      .pipe(
+        map((response) => {
+          const body = response.body;
+          const status = response.status;
+          if (status !== 200) {
+            const msg = (body as any)?.message ?? (body as any)?.error ?? `Request failed (${status})`;
+            throw { status, error: { message: msg }, message: msg };
+          }
+          if (!body || (body.role !== 'principal' && body.role !== 'teacher')) {
+            const msg =
+              (body as any)?.message ??
+              (body as any)?.error ??
+              'Server returned an unexpected response. Check the API terminal for logs.';
+            throw { status: 200, error: { message: msg }, message: msg };
+          }
+          return body;
+        })
+      );
+  }
 }

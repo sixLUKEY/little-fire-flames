@@ -1,29 +1,34 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../api/api.service';
 import { DialogService } from '../../common/dialog/dialog.service';
-import { ClassListResponseDto } from '@api/types';
+import type { ClassResponseDto } from '@api/types';
 
 @Component({
   selector: 'app-classes',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './classes.html',
   styleUrl: './classes.css',
 })
-export class Classes {
+export class Classes implements OnInit {
   private readonly apiService = inject(ApiService);
-  protected textToDisplay = signal<string>('');
   protected readonly dialogService = inject(DialogService);
 
-  protected displayEntity(id?: string): void {
-    this.apiService.getClasses(id).subscribe({
-      next: (response: ClassListResponseDto) => {
-        this.textToDisplay.set(JSON.stringify(response, null, 2));
-        console.log('classes fetched:', response);
-      },
-      error: (error: unknown) => {
-        console.error('Error fetching classes:', error);
-        this.textToDisplay.set(`Error: ${JSON.stringify(error, null, 2)}`);
-      },
+  protected entities = signal<ClassResponseDto[]>([]);
+  protected selectedId = signal<string>('');
+
+  ngOnInit(): void {
+    this.apiService.getClasses().subscribe({
+      next: (response) => this.entities.set(response.data),
+      error: (err) => console.error('Error fetching classes:', err),
     });
+  }
+
+  protected openUpdate(classId: string): void {
+    this.dialogService.show('updateClass', classId);
+  }
+
+  protected openDelete(classId: string): void {
+    this.dialogService.show('deleteClass', classId);
   }
 }

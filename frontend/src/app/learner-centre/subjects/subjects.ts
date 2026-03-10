@@ -1,29 +1,34 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../api/api.service';
 import { DialogService } from '../../common/dialog/dialog.service';
-import { SubjectListResponseDto } from '@api/types';
+import type { SubjectResponseDto } from '@api/types';
 
 @Component({
   selector: 'app-subjects',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './subjects.html',
   styleUrl: './subjects.css',
 })
-export class Subjects {
+export class Subjects implements OnInit {
   private readonly apiService = inject(ApiService);
-  protected textToDisplay = signal<string>('');
   protected readonly dialogService = inject(DialogService);
 
-  protected displayEntity(id?: string): void {
-    this.apiService.getSubjects(id).subscribe({
-      next: (response: SubjectListResponseDto) => {
-        this.textToDisplay.set(JSON.stringify(response, null, 2));
-        console.log('subjects fetched:', response);
-      },
-      error: (error: unknown) => {
-        console.error('Error fetching subjects:', error);
-        this.textToDisplay.set(`Error: ${JSON.stringify(error, null, 2)}`);
-      },
+  protected entities = signal<SubjectResponseDto[]>([]);
+  protected selectedId = signal<string>('');
+
+  ngOnInit(): void {
+    this.apiService.getSubjects().subscribe({
+      next: (response) => this.entities.set(response.data),
+      error: (err) => console.error('Error fetching subjects:', err),
     });
+  }
+
+  protected openUpdate(subjectId: string): void {
+    this.dialogService.show('updateSubject', subjectId);
+  }
+
+  protected openDelete(subjectId: string): void {
+    this.dialogService.show('deleteSubject', subjectId);
   }
 }

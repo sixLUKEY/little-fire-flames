@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'lff-learner-centre',
@@ -8,4 +9,5 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   styleUrl: './learner-centre.css',
 })
 export class LearnerCentre {
+  protected readonly auth = inject(AuthService);
 }

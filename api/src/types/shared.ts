@@ -5,6 +5,28 @@ import { CreateLearnerDto, LearnerListResponseDto, LearnerResponseDto, SubjectRe
 import { SubjectListResponseDto, SubjectResponseDto } from '../routes/subjects/dto';
 import { TeacherListResponseDto, TeacherResponseDto } from '../routes/teachers/dto';
 
+// Auth types (staff only; parents use studentId on Parents Corner)
+export type UserRole = 'teacher' | 'principal';
+
+export interface AuthUser {
+  userId: string;
+  email?: string;
+  role: UserRole;
+}
+
+export interface LoginRequest {
+  email?: string;
+  password?: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  expiresIn?: number;
+  role: UserRole;
+  userId: string;
+  email?: string;
+}
+
 // Base types
 export type { HttpMethod, Params, V1RequestOptions, HttpRawResponse } from '../types';
 

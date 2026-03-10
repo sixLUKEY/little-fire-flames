@@ -97,11 +97,11 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                 <div>
                   <label class="block text-sm font-medium mb-1">Score</label>
-                  <input
+                    <input
                     type="number"
                     [formControl]="getResultControl(i)"
                     min="0"
-                    max="100"
+                    max="7"
                     class="dialog-input"
                     [readonly]="isPublished()"
                   />

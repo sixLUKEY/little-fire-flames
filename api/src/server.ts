@@ -39,9 +39,7 @@ routes.forEach((route) => {
       break;
     case 'post':
       app.post(path, async (req: express.Request, res: express.Response) => {
-        console.log('CALLED POST');
         try {
-          // For POST, extract id from body or params
           const paramId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
           const params = {
             id: req.body?.studentId || req.body?.id || req.body?.classId || req.body?.subjectId || req.body?.teacherId || paramId,
@@ -49,6 +47,7 @@ routes.forEach((route) => {
           const result = await route.handler({ params, body: req.body, event: req as any });
           res.status(result.statusCode).json(result.body);
         } catch (error) {
+          console.error('[POST] Error for', path, (error as Error)?.message);
           res.status(500).json({ error: 'Internal server error' });
         }
       });

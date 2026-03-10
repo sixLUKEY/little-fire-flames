@@ -81,7 +81,7 @@
                 <div class="feedback-block">
                   <p class="feedback-text">
                     Report for {{ student()!.name }} (ID: {{ student()!.studentId }}).
-                    Class: {{ student()!.classId }}. Subject results and feedback for this term.
+                    Subject results and feedback for this term.
                   </p>
                 </div>
               </div>
@@ -124,10 +124,7 @@
           <button type="button" class="btn btn-secondary" (click)="viewAnotherStudent()">
             View another student
           </button>
-          <button type="button" class="btn btn-primary" disabled title="Coming soon">
-            Curriculum overview
-          </button>
-          <button type="button" class="btn btn-primary" disabled title="Coming soon">
+          <button type="button" class="btn btn-primary" (click)="downloadPdf()" [disabled]="!currentTermEntry()">
             Download PDF
           </button>
         </div>

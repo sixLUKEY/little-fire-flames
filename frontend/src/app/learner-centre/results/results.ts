@@ -5,6 +5,7 @@ import {
   ReactiveFormsModule,
   FormArray,
   FormControl,
+  Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../api/api.service';
@@ -49,12 +50,17 @@ export class Results implements OnInit {
     results: this.formBuilder.array<FormGroup>([]),
   });
 
+  /** Match term/year regardless of stored type (number vs string from API/form). */
+  private sameTermYear(e: { term: number; year: number }, term: number, year: number): boolean {
+    return Number(e.term) === Number(term) && Number(e.year) === Number(year);
+  }
+
   protected selectedTermEntry = computed(() => {
     const learner = this.selectedLearner();
-    const term = this.selectedTerm();
-    const year = this.selectedYear();
+    const term = Number(this.selectedTerm());
+    const year = Number(this.selectedYear());
     if (!learner?.termResults?.length) return null;
-    return learner.termResults.find((e) => e.term === term && e.year === year) ?? null;
+    return learner.termResults.find((e) => this.sameTermYear(e, term, year)) ?? null;
   });
 
   protected isPublished = computed(() => this.selectedTermEntry()?.status === 'published');
@@ -133,18 +139,19 @@ export class Results implements OnInit {
   }
 
   protected onTermOrYearChange() {
-    const term = this.form.controls['term'].value;
-    const year = this.form.controls['year'].value;
+    const term = Number(this.form.controls['term'].value);
+    const year = Number(this.form.controls['year'].value);
     this.selectedTerm.set(term);
     this.selectedYear.set(year);
+    this.form.patchValue({ term, year });
     this.syncResultsFormToTerm();
   }
 
   protected syncResultsFormToTerm() {
     const learner = this.selectedLearner();
-    const term = this.selectedTerm();
-    const year = this.selectedYear();
-    const entry = learner?.termResults?.find((e) => e.term === term && e.year === year);
+    const term = Number(this.selectedTerm());
+    const year = Number(this.selectedYear());
+    const entry = learner?.termResults?.find((e) => this.sameTermYear(e, term, year));
     const subjects = this.classSubjects();
     this.initializeResultsForm(entry?.subjects ?? [], subjects);
   }
@@ -161,7 +168,10 @@ export class Results implements OnInit {
       const resultGroup = this.formBuilder.group({
         subjectId: this.formBuilder.control<string>(subject.subjectId),
         name: this.formBuilder.control<string>(subject.name),
-        result: this.formBuilder.control<number>(existing?.result ?? 0),
+        result: this.formBuilder.control<number>(existing?.result ?? 0, [
+          Validators.min(0),
+          Validators.max(7),
+        ]),
         feedback: this.formBuilder.control<string>(existing?.feedback ?? ''),
       });
       resultsArray.push(resultGroup);
@@ -200,10 +210,10 @@ export class Results implements OnInit {
     const learner = this.selectedLearner();
     if (!learner || this.form.invalid) return;
 
-    const term = this.form.controls['term'].value;
-    const year = this.form.controls['year'].value;
+    const term = Number(this.form.controls['term'].value);
+    const year = Number(this.form.controls['year'].value);
     const existing = learner.termResults ?? [];
-    const entry = existing.find((e) => e.term === term && e.year === year);
+    const entry = existing.find((e) => this.sameTermYear(e, term, year));
     if (entry?.status === 'published') {
       return;
     }
@@ -222,10 +232,10 @@ export class Results implements OnInit {
 
     const newEntry: TermResultEntry = { term, year, status, subjects };
     const merged: TermResultEntry[] = existing.filter(
-      (e) => !(e.term === term && e.year === year)
+      (e) => !this.sameTermYear(e, term, year)
     );
     merged.push(newEntry);
-    merged.sort((a, b) => a.year - b.year || a.term - b.term);
+    merged.sort((a, b) => Number(a.year) - Number(b.year) || Number(a.term) - Number(b.term));
 
     this.apiService.updateLearner(learner.studentId, { termResults: merged }).subscribe({
       next: () => {

@@ -46,6 +46,7 @@ export function authMiddleware(
     (req as Request).user = {
       userId: payload.sub,
       email: payload.email,
+      role: payload.role as AuthContext['role'],
       scope: payload.scope,
     };
     next();
@@ -57,8 +58,19 @@ export function authMiddleware(
 }
 
 /** Placeholder: in production replace with real JWT verify + decode. */
-function decodePlaceholder(token: string): { sub: string; email?: string; scope?: string[] } {
+function decodePlaceholder(token: string): { sub: string; email?: string; role?: string; scope?: string[] } {
   if (!token) throw new Error('Empty token');
-  // Stub: treat token as opaque; real impl would JWT.verify(token, secretOrKey).
-  return { sub: 'placeholder-user-id', email: undefined, scope: [] };
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return { sub: 'placeholder-user-id', email: undefined, scope: [] };
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    return {
+      sub: payload.sub ?? 'placeholder-user-id',
+      email: payload.email,
+      role: payload.role,
+      scope: payload.scope,
+    };
+  } catch {
+    return { sub: 'placeholder-user-id', email: undefined, scope: [] };
+  }
 }

@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule, FormArray, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from 'src/app/api/api.service';
+import { DialogService } from 'src/app/common/dialog/dialog.service';
 import { AbstractDialog } from 'src/app/common/dialog/abstract-dialog';
 import type { ClassResponseDto, SubjectResponseDto, TeacherResponseDto } from '@api/types';
 
@@ -14,6 +15,7 @@ import type { ClassResponseDto, SubjectResponseDto, TeacherResponseDto } from '@
 export class UpdateClass extends AbstractDialog implements OnInit {
   private readonly apiService = inject(ApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly dialogService = inject(DialogService);
 
   protected classes = signal<ClassResponseDto[]>([]);
   protected subjects = signal<SubjectResponseDto[]>([]);
@@ -28,7 +30,14 @@ export class UpdateClass extends AbstractDialog implements OnInit {
 
   ngOnInit() {
     this.apiService.getClasses().subscribe({
-      next: (r) => this.classes.set(r.data),
+      next: (r) => {
+        this.classes.set(r.data);
+        const initialId = this.dialogService.getInitialEntityId();
+        if (initialId) {
+          this.form.patchValue({ classId: initialId });
+          this.onClassSelected();
+        }
+      },
       error: (e) => console.error('Error loading classes:', e),
     });
     this.apiService.getSubjects().subscribe({
@@ -37,6 +46,8 @@ export class UpdateClass extends AbstractDialog implements OnInit {
         const arr = this.subjectIdsArray;
         arr.clear();
         r.data.forEach(() => arr.push(this.formBuilder.control(false)));
+        const initialId = this.dialogService.getInitialEntityId();
+        if (initialId && this.form.controls['classId'].value) this.onClassSelected();
       },
       error: (e) => console.error('Error loading subjects:', e),
     });
