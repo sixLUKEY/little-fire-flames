@@ -1,5 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
-import { SubjectResults } from '../../routes/learners/dto';
+import { SubjectResults, TermResultEntry } from '../../routes/learners/dto';
 import { sequelize } from '..';
 
 export class Learner extends Model {
@@ -7,6 +7,7 @@ export class Learner extends Model {
   declare studentId: string;
   declare classId: string;
   declare results: SubjectResults[];
+  declare termResults: TermResultEntry[];
 }
 
 Learner.init(
@@ -26,6 +27,13 @@ Learner.init(
     },
     results: {
       type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: () => [],
+    },
+    termResults: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: () => [],
     },
   },
   { sequelize, tableName: 'learners' }

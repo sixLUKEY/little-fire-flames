@@ -17,6 +17,7 @@ export const handleV1Classes = async (
       classId: cls.classId,
       name: cls.name,
       teacherId: cls.teacherId,
+      subjectIds: Array.isArray(cls.subjectIds) ? cls.subjectIds : [],
     })),
   };
 
@@ -42,6 +43,7 @@ export const handleV1ClassCreate = async (
     const createDto: CreateClassDto = {
       name: options.body.name,
       teacherId: options.body.teacherId,
+      subjectIds: Array.isArray(options.body.subjectIds) ? options.body.subjectIds : undefined,
     };
 
     await createClass(createDto);
@@ -89,7 +91,7 @@ export const handleV1ClassUpdate = async (
     const updateDto: UpdateClassDto = {
       name: options.body.name,
       teacherId: options.body.teacherId,
-      learnerIds: options.body.learnerIds,
+      subjectIds: Array.isArray(options.body.subjectIds) ? options.body.subjectIds : undefined,
     };
 
     await updateClass(classId, updateDto);

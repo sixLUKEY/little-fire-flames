@@ -2,3 +2,29 @@
   max-width: 1200px;
   margin: 0 auto;
 }
+
+.results-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.results-badge--draft {
+  background: var(--lff-surface-elevated);
+  color: var(--lff-ink-muted);
+  border: 1px solid var(--lff-border);
+}
+
+.results-badge--published {
+  background: var(--lff-accent);
+  color: var(--lff-ink);
+}
+
+.results-card {
+  border: 1px solid var(--lff-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: var(--lff-surface-elevated);
+}

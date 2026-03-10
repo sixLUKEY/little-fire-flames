@@ -8,6 +8,16 @@ export interface SubjectResults {
   feedback: string;
 }
 
+export type ResultStatus = 'draft' | 'published';
+
+/** Results for one term. Once published, ineditable. */
+export interface TermResultEntry {
+  term: number;
+  year: number;
+  status: ResultStatus;
+  subjects: SubjectResults[];
+}
+
 // Request DTOs
 export interface CreateLearnerDto {
   name: string;
@@ -19,6 +29,7 @@ export interface UpdateLearnerDto {
   name?: string;
   classId?: string;
   results?: SubjectResults[];
+  termResults?: TermResultEntry[];
 }
 
 export interface DeleteLearnerDto {
@@ -35,6 +46,7 @@ export interface LearnerResponseDto {
   studentId: string;
   classId: string;
   results: SubjectResults[];
+  termResults: TermResultEntry[];
 }
 
 export interface LearnerListResponseDto {

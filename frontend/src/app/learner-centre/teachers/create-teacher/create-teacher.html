@@ -1,4 +1,4 @@
-<dialog #dialogRef class="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg shadow-xl p-6 w-full max-w-md">
+<dialog #dialogRef class="lff-dialog">
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
     <h2 class="text-xl font-semibold mb-4">Create Teacher</h2>
     
@@ -28,15 +28,14 @@
 
     <div class="space-y-2">
       <label class="block text-sm font-medium">
-        Subject
+        Class <span class="text-gray-500 font-normal">(optional — classes assign teachers, not the other way around)</span>
         <select 
-          formControlName="subjectId" 
+          formControlName="classId" 
           class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          required
         >
-          <option value="">Select a subject</option>
-          @for (subject of subjects(); track subject.subjectId) {
-            <option [value]="subject.subjectId">{{ subject.name }} ({{ subject.subjectId }})</option>
+          <option value="">None</option>
+          @for (cls of classes(); track cls.classId) {
+            <option [value]="cls.classId">{{ cls.name }} ({{ cls.classId }})</option>
           }
         </select>
       </label>

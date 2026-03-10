@@ -1,17 +1,37 @@
-<dialog #dialogRef>
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <label>
-      name for learner
-      <input formControlName="studentName" type="text" />
-    </label>
-    <label>
-      studentId for learner
-      <input formControlName="studentId" type="text" />
-    </label>
-    <label>
-      classId for learner
-      <input formControlName="classId" type="text" />
-    </label>
-    <button type="submit">submit</button>
+<dialog #dialogRef class="lff-dialog">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+    <h2 class="text-xl font-semibold mb-4">Update Subject</h2>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium">Select subject</label>
+      <select
+        formControlName="subjectId"
+        (change)="onSubjectSelected()"
+        class="dialog-select"
+      >
+        <option value="">— Select a subject —</option>
+        @for (s of subjects(); track s.subjectId) {
+          <option [value]="s.subjectId">{{ s.name }} ({{ s.subjectId }})</option>
+        }
+      </select>
+    </div>
+
+    @if (form.controls['subjectId'].value) {
+      <div class="space-y-4 pt-2 border-t border-[var(--lff-border)]">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Name</label>
+          <input formControlName="name" type="text" class="dialog-input" />
+        </div>
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Description</label>
+          <textarea formControlName="description" rows="3" class="dialog-input"></textarea>
+        </div>
+      </div>
+    }
+
+    <div class="flex gap-2 justify-end mt-6">
+      <button type="button" (click)="closeDialog()" class="dialog-btn-secondary">Cancel</button>
+      <button type="submit" [disabled]="!form.controls['subjectId'].value" class="dialog-btn-primary">Update</button>
+    </div>
   </form>
 </dialog>

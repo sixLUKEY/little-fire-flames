@@ -30,19 +30,31 @@ export const handleV1SubjectCreate = async (
   options: V1RequestOptions<CreateSubjectDto>
 ): Promise<HttpRawResponse> => {
   try {
-    if (!options.body) {
+    const body: Partial<CreateSubjectDto> = options.body ?? {};
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    const description = typeof body.description === 'string' ? body.description.trim() : '';
+
+    if (!name) {
       return {
         statusCode: 400,
         body: {
-          message: 'Request body is required',
+          message: 'name is required and must be a non-empty string',
+        },
+      };
+    }
+    if (!description) {
+      return {
+        statusCode: 400,
+        body: {
+          message: 'description is required and must be a non-empty string',
         },
       };
     }
 
     const createDto: CreateSubjectDto = {
-      name: options.body.name,
-      description: options.body.description,
-      subjectId: options.body.subjectId,
+      name,
+      description,
+      subjectId: body.subjectId,
     };
 
     await createSubject(createDto);

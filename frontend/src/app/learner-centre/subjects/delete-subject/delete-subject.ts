@@ -1,36 +1,48 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { ApiService } from 'src/app/api/api.service';
 import { AbstractDialog } from 'src/app/common/dialog/abstract-dialog';
+import type { SubjectResponseDto } from '@api/types';
 
 @Component({
   selector: 'app-delete-subject',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './delete-subject.html',
   styleUrl: './delete-subject.css',
 })
-export class DeleteSubject extends AbstractDialog {
+export class DeleteSubject extends AbstractDialog implements OnInit {
   private readonly apiService = inject(ApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+
+  protected subjects = signal<SubjectResponseDto[]>([]);
 
   protected form: FormGroup = this.formBuilder.group({
     subjectId: this.formBuilder.control<string>(''),
   });
 
-  protected onSubmit() {
-    if (this.form.invalid || !this.form.controls['subjectId'].value) {
-      return;
-    }
+  ngOnInit() {
+    this.apiService.getSubjects().subscribe({
+      next: (r) => this.subjects.set(r.data),
+      error: (e) => console.error('Error loading subjects:', e),
+    });
+  }
 
-    this.apiService.deleteSubject(this.form.controls['subjectId'].value).subscribe({
-      next: (response) => {
-        console.log('Subject deleted successfully:', response);
+  protected get selectedSubject(): SubjectResponseDto | null {
+    const id = this.form.controls['subjectId'].value;
+    return id ? this.subjects().find((s) => s.subjectId === id) ?? null : null;
+  }
+
+  protected onSubmit(): void {
+    const subjectId = this.form.controls['subjectId'].value;
+    if (!subjectId) return;
+
+    this.apiService.deleteSubject(subjectId).subscribe({
+      next: () => {
         this.form.reset();
         this.closeDialog();
       },
-      error: (error) => {
-        console.error('Error deleting subject:', error);
-      }
+      error: (e) => console.error('Error deleting subject:', e),
     });
   }
 }

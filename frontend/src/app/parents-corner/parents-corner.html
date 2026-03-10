@@ -1,54 +1,137 @@
-<div class="px-32 bg-red-50 w-full h-full">
-  <div class="flex flex-col gap-16">
-    <div class="flex justify-between items-end">
-      <span class="text-5xl font-bold">Parent's corner</span>
-      <span class="text-2xl">Someones's name</span>
+<div class="parents-corner">
+  @if (!student()) {
+    <div class="landing">
+      <div class="landing-card">
+        <h1 class="landing-title">Parent's Corner</h1>
+        <p class="landing-subtitle">Enter your child's student ID to view their report</p>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit($event)" class="landing-form">
+          <label class="landing-label">
+            Student ID
+            <input
+              formControlName="studentId"
+              type="text"
+              class="landing-input"
+              placeholder="e.g. STU001"
+              autocomplete="off"
+            />
+          </label>
+          @if (notFound()) {
+            <p class="landing-error">No student found with this ID. Please check and try again.</p>
+          }
+          <button
+            type="submit"
+            [disabled]="loading() || !form.controls['studentId'].value?.trim()"
+            class="landing-button"
+          >
+            @if (loading()) {
+              <span class="landing-spinner" aria-hidden="true"></span>
+              Searching…
+            } @else {
+              View report
+            }
+          </button>
+        </form>
+      </div>
     </div>
-    <div>
-      <div class="meta"></div>
-      <div class="feedback">
-        <div class="overall flex justify-between">
-          <div class="term flex flex-col">
-            <div class="term-meta flex">
-              <span>Term 2</span>
-              <span>8 March - 6 June</span>
+  } @else {
+    <div class="report px-8 py-6 md:px-12">
+      <div class="report-inner">
+        <div class="report-header">
+          <span class="report-title">Parent's corner</span>
+          <span class="report-student-name">{{ student()!.name }}</span>
+        </div>
+
+        <div class="report-body">
+          <div class="feedback">
+            <!-- Term selector: tabs for each published term -->
+            <div class="term-tabs">
+              <p class="term-tabs-intro">Select a term to view published results:</p>
+              @if (publishedTermOptions().length) {
+                <div class="term-tabs-list" role="tablist">
+                  @for (opt of publishedTermOptions(); track opt.year + '-' + opt.term) {
+                    <button
+                      type="button"
+                      class="term-tab"
+                      [class.term-tab--active]="selectedTerm() === opt.term && selectedYear() === opt.year"
+                      (click)="selectTerm(opt.term, opt.year)"
+                      [attr.aria-selected]="selectedTerm() === opt.term && selectedYear() === opt.year"
+                    >
+                      <span class="term-tab-name">Term {{ opt.term }}</span>
+                      <span class="term-tab-dates">{{ getTermLabel(opt.term, opt.year) }}</span>
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="no-terms-msg">No published results yet. Results will appear here once the school publishes them for a term.</p>
+              }
             </div>
-            <div class="progress">overall progress: GOOD</div>
-          </div>
-          <div class="feedback-block bg-white max-w-[800px]">
-            <span class="text-xl">
-              Lorem ipsum dolor sit amet consectetur. Id consectetur curabitur viverra etiam
-              facilisi. Lacus amet quis varius commodo rhoncus hendrerit quam suscipit. Sit nisl
-              quam eu mi gravida mauris lorem feugiat. Cursus eleifend ultrices vulputate non sed
-              non. Lobortis maecenas elementum nibh.</span
-            >
+
+            @if (currentTermEntry(); as entry) {
+              <div class="overall flex flex-wrap justify-between gap-4 mt-6">
+                <div class="term flex flex-col">
+                  <div class="term-meta flex flex-wrap gap-2">
+                    <span>Term {{ entry.term }} {{ entry.year }}</span>
+                    <span>{{ getTermLabel(entry.term, entry.year) }}</span>
+                  </div>
+                  <div class="progress">
+                    Overall progress: {{ overallProgress(entry.subjects) }}
+                  </div>
+                </div>
+                <div class="feedback-block">
+                  <p class="feedback-text">
+                    Report for {{ student()!.name }} (ID: {{ student()!.studentId }}).
+                    Class: {{ student()!.classId }}. Subject results and feedback for this term.
+                  </p>
+                </div>
+              </div>
+
+              <div class="subjects mt-6">
+                @if (entry.subjects.length) {
+                  <table class="results-table">
+                    <thead>
+                      <tr>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Feedback</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (r of entry.subjects; track r.name) {
+                        <tr>
+                          <td>{{ r.name }}</td>
+                          <td class="score">{{ r.result != null ? r.result : '—' }}</td>
+                          <td>{{ r.feedback || '—' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <div class="no-results">
+                    <p>No subject results for this term.</p>
+                  </div>
+                }
+              </div>
+            } @else if (publishedTermOptions().length) {
+              <div class="no-results mt-6">
+                <p>No published results for Term {{ selectedTerm() }} {{ selectedYear() }}.</p>
+              </div>
+            }
           </div>
         </div>
-        <div class="subjects mt-6">
-          <table class="w-full border-collapse bg-white rounded-lg overflow-hidden shadow">
-            <thead>
-              <tr class="bg-red-100 border-b border-red-200">
-                <th class="text-left py-3 px-4 font-semibold">Subject</th>
-                <th class="text-left py-3 px-4 font-semibold">Grade</th>
-                <th class="text-left py-3 px-4 font-semibold">Feedback</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (result of subjectResults; track result.subject) {
-                <tr class="border-b border-gray-100 hover:bg-red-50/50">
-                  <td class="py-3 px-4">{{ result.subject }}</td>
-                  <td class="py-3 px-4 font-medium">{{ result.grade }}</td>
-                  <td class="py-3 px-4">{{ result.feedback }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+
+        <div class="report-actions">
+          <button type="button" class="btn btn-secondary" (click)="viewAnotherStudent()">
+            View another student
+          </button>
+          <button type="button" class="btn btn-primary" disabled title="Coming soon">
+            Curriculum overview
+          </button>
+          <button type="button" class="btn btn-primary" disabled title="Coming soon">
+            Download PDF
+          </button>
         </div>
       </div>
     </div>
-    <div class="buttons flex gap-3">
-      <button>Curriculum Overview</button>
-      <button>Download Pdf</button>
-    </div>
-  </div>
+  }
 </div>

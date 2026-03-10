@@ -1,3 +1,15 @@
 .navbar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--lff-ink);
+  color: var(--lff-surface-elevated);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nav-link:hover {
+  background: var(--lff-primary-soft);
+  color: var(--lff-surface-elevated);
+}
+
+.nav-link.nav-active {
+  background: rgba(255, 153, 44, 0.2);
+  color: var(--lff-surface-elevated);
 }

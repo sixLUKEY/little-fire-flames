@@ -18,6 +18,7 @@ export const handleV1Learners = async (
       studentId: learner.studentId,
       classId: learner.classId,
       results: learner.results || [],
+      termResults: learner.termResults ?? [],
     })),
   };
 
@@ -92,6 +93,7 @@ export const handleV1LearnerUpdate = async (
       name: options.body.name,
       classId: options.body.classId,
       results: options.body.results,
+      termResults: options.body.termResults,
     };
 
     await updateLearner(studentId, updateDto);

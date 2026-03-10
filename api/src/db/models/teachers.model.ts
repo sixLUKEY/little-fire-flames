@@ -5,7 +5,7 @@ export class Teacher extends Model {
   declare teacherId: string;
   declare name: string;
   declare description: string;
-  declare subjectId: string;
+  declare classId: string | null;
 }
 
 Teacher.init(
@@ -23,9 +23,9 @@ Teacher.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    subjectId: {
+    classId: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true, // true so existing rows survive sync; backfill then set to false if desired
     },
   },
   { sequelize, tableName: 'teachers' }

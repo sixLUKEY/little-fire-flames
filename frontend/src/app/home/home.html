@@ -1,18 +1,147 @@
-<div class="home p-6">
-  <h1 class="text-3xl font-bold mb-6">Welcome to Little Fire Flames</h1>
-  
-  <div class="flex gap-4 mb-8">
-    <a
-      routerLink="/learner-centre"
-      class="px-6 py-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-    >
-      Learner Centre
-    </a>
-    <a
-      routerLink="/report-centre"
-      class="px-6 py-3 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-    >
-      Report Centre
-    </a>
-  </div>
+<div class="home">
+  <!-- Hero -->
+  <section class="home-hero" id="home">
+    <div class="home-hero-bg" aria-hidden="true"></div>
+    <div class="home-hero-inner">
+      <img class="logo" src="lff-logo.png" alt="little fire flames logo" />
+      <h1 class="home-hero-title">Little Fire Flames</h1>
+      <p class="home-hero-tagline">
+        Igniting young minds with warmth, care, and endless possibilities
+      </p>
+      <div class="home-hero-actions">
+        <a routerLink="/learner-centre/learners" class="home-btn home-btn-primary"
+          >Teachers corner</a
+        >
+        <a routerLink="/parents-corner" class="home-btn home-btn-secondary">Parents corner</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="home-section" id="about">
+    <div class="home-container">
+      <div class="home-section-intro">
+        <h2 class="home-section-title">Welcome to Our School</h2>
+        <p class="home-section-text">
+          At Little Fire Flames, we believe every child is a unique spark waiting to ignite into
+          something extraordinary. Our nurturing environment provides the perfect foundation for
+          early learning and development.
+        </p>
+        <p class="home-section-text">
+          With experienced educators, modern facilities, and a play-based curriculum, we create
+          magical moments of discovery every single day. Your child's journey to lifelong learning
+          starts here.
+        </p>
+      </div>
+      <div class="home-cards home-cards-three">
+        <div class="home-card">
+          <div class="home-card-icon home-card-icon-heart">♥</div>
+          <h3 class="home-card-title">Caring Environment</h3>
+          <p class="home-card-text">
+            Safe, loving spaces where children feel valued and supported in their growth journey.
+          </p>
+        </div>
+        <div class="home-card">
+          <div class="home-card-icon home-card-icon-users">👥</div>
+          <h3 class="home-card-title">Expert Educators</h3>
+          <p class="home-card-text">
+            Qualified teachers passionate about early childhood development and education.
+          </p>
+        </div>
+        <div class="home-card">
+          <div class="home-card-icon home-card-icon-flame">🔥</div>
+          <h3 class="home-card-title">Play-Based Learning</h3>
+          <p class="home-card-text">
+            Engaging activities that spark curiosity and foster natural love for learning.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Classes -->
+  <section class="home-section home-section-alt" id="classes">
+    <div class="home-container">
+      <div class="home-section-head">
+        <h2 class="home-section-title">Our Classes</h2>
+        <p class="home-section-subtitle">
+          Age-appropriate programs designed for every stage of early development
+        </p>
+      </div>
+      <div class="home-cards home-cards-two">
+        @for (cls of classPrograms; track cls.name) {
+          <div class="home-card home-card-class">
+            <div class="home-card-class-badge">{{ cls.age }}</div>
+            <h3 class="home-card-title home-card-title-lg">{{ cls.name }}</h3>
+            <p class="home-card-text">{{ cls.description }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Team -->
+  <section class="home-section" id="team">
+    <div class="home-container">
+      <div class="home-section-head">
+        <h2 class="home-section-title">Meet Our Team</h2>
+        <p class="home-section-subtitle">
+          Dedicated educators committed to your child's growth and happiness
+        </p>
+      </div>
+      <div class="home-team-grid">
+        @for (member of team; track member.name) {
+          <div class="home-team-card">
+            <img class="home-team-avatar" [src]="member.url" alt="Teacher image" />
+            <h3 class="home-team-name">{{ member.name }}</h3>
+            <p class="home-team-role">{{ member.role }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section class="home-section home-section-contact" id="contact">
+    <div class="home-container home-container-narrow">
+      <div class="home-section-head">
+        <h2 class="home-section-title">Get in Touch</h2>
+        <p class="home-section-subtitle">
+          Ready to start your child's journey with us? We'd love to hear from you!
+        </p>
+      </div>
+      <div class="home-contact-card">
+        <div class="home-contact-block">
+          <h3 class="home-contact-label">Visit Us</h3>
+          <p class="home-contact-value">7 Wielewaal Crescent, Robinvale, Atlantis, 7349</p>
+        </div>
+        <div class="home-contact-block">
+          <h3 class="home-contact-label">Call Us</h3>
+          <p class="home-contact-value">Mobile: (+27) 456-7891</p>
+        </div>
+        <div class="home-contact-block">
+          <h3 class="home-contact-label">Email Us</h3>
+          <p class="home-contact-value">littlefireflames&#64;gmail.com</p>
+        </div>
+        <div class="home-contact-block">
+          <h3 class="home-contact-label">Operating Hours</h3>
+          <p class="home-contact-value">Monday – Friday: 7:00 AM – 4:00 PM</p>
+        </div>
+        <a routerLink="/parents-corner" class="home-btn home-btn-primary home-btn-block"
+          >Schedule a Visit</a
+        >
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="home-footer">
+    <div class="home-container">
+      <div class="home-footer-brand">
+        <span class="home-footer-icon" aria-hidden="true">🔥</span>
+        <span class="home-footer-name">Little Fire Flames Pre-Primary School</span>
+      </div>
+      <p class="home-footer-copy">© {{ currentYear }} Little Fire Flames. All rights reserved.</p>
+    </div>
+  </footer>
 </div>

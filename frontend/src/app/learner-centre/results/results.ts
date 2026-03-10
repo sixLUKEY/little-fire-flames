@@ -1,12 +1,20 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule, FormArray, FormControl } from '@angular/forms';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import {
+  FormGroup,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  FormArray,
+  FormControl,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../api/api.service';
+import { getTermLabel, getYearsAvailable } from './term-periods';
 import type {
   ClassResponseDto,
   LearnerResponseDto,
   SubjectResponseDto,
   SubjectResults,
+  TermResultEntry,
 } from '@api/types';
 
 @Component({
@@ -25,12 +33,31 @@ export class Results implements OnInit {
   protected selectedLearner = signal<LearnerResponseDto | null>(null);
   protected classSubjects = signal<SubjectResponseDto[]>([]);
   protected loading = signal<boolean>(false);
+  protected currentYear = new Date().getFullYear();
+  protected yearsAvailable = getYearsAvailable();
+  protected getTermLabel = getTermLabel;
+
+  /** Signals for selected term/year so computed() reacts when they change. */
+  protected selectedTerm = signal<number>(1);
+  protected selectedYear = signal<number>(this.currentYear);
 
   protected form: FormGroup = this.formBuilder.group({
     classId: this.formBuilder.control<string>(''),
     studentId: this.formBuilder.control<string>(''),
+    term: this.formBuilder.control<number>(1),
+    year: this.formBuilder.control<number>(this.currentYear),
     results: this.formBuilder.array<FormGroup>([]),
   });
+
+  protected selectedTermEntry = computed(() => {
+    const learner = this.selectedLearner();
+    const term = this.selectedTerm();
+    const year = this.selectedYear();
+    if (!learner?.termResults?.length) return null;
+    return learner.termResults.find((e) => e.term === term && e.year === year) ?? null;
+  });
+
+  protected isPublished = computed(() => this.selectedTermEntry()?.status === 'published');
 
   ngOnInit() {
     this.loadClasses();
@@ -43,10 +70,7 @@ export class Results implements OnInit {
         this.classes.set(response.data);
         this.loading.set(false);
       },
-      error: (error) => {
-        console.error('Error loading classes:', error);
-        this.loading.set(false);
-      }
+      error: () => this.loading.set(false),
     });
   }
 
@@ -61,20 +85,11 @@ export class Results implements OnInit {
       this.form.controls['studentId'].setValue('');
       return;
     }
-
-    const selected = this.classes().find(c => c.classId === classId);
-    this.selectedClass.set(selected || null);
-
-    // Reset learner selection
+    this.selectedClass.set(this.classes().find((c) => c.classId === classId) ?? null);
     this.selectedLearner.set(null);
     this.form.controls['studentId'].setValue('');
     this.clearResultsForm();
-
-    // Load learners for this class
     this.loadLearnersForClass(classId);
-
-    // Load class subjects (from class.subjectIds if available, otherwise all subjects)
-    // For now, we'll load all subjects. In the future, this should come from class.subjectIds
     this.loadSubjects();
   }
 
@@ -82,33 +97,26 @@ export class Results implements OnInit {
     this.loading.set(true);
     this.apiService.getLearners().subscribe({
       next: (response) => {
-        // Filter learners by classId
-        const classLearners = response.data.filter(l => l.classId === classId);
-        this.learners.set(classLearners);
+        this.learners.set(response.data.filter((l) => l.classId === classId));
         this.loading.set(false);
       },
-      error: (error) => {
-        console.error('Error loading learners:', error);
-        this.loading.set(false);
-      }
+      error: () => this.loading.set(false),
     });
   }
 
   protected loadSubjects() {
+    const selected = this.selectedClass();
+    const subjectIds = selected?.subjectIds;
     this.apiService.getSubjects().subscribe({
       next: (response) => {
-        // TODO: Filter by class.subjectIds when that relationship is stored
-        // For now, show all subjects. When class.subjectIds is implemented,
-        // filter: response.data.filter(s => selectedClass()?.subjectIds?.includes(s.subjectId))
-        this.classSubjects.set(response.data);
-        // Only initialize if a learner is already selected and subjects are loaded
-        if (this.selectedLearner() && this.classSubjects().length > 0) {
-          this.initializeResultsForm(this.selectedLearner()!.results || []);
-        }
+        const subjects =
+          subjectIds?.length
+            ? response.data.filter((s) => subjectIds.includes(s.subjectId))
+            : response.data;
+        this.classSubjects.set(subjects);
+        this.syncResultsFormToTerm();
       },
-      error: (error) => {
-        console.error('Error loading subjects:', error);
-      }
+      error: () => {},
     });
   }
 
@@ -119,48 +127,49 @@ export class Results implements OnInit {
       this.clearResultsForm();
       return;
     }
-
-    const learner = this.learners().find(l => l.studentId === studentId);
-    this.selectedLearner.set(learner || null);
-
-    if (learner) {
-      this.loadLearnerResults(learner);
-    }
+    const learner = this.learners().find((l) => l.studentId === studentId) ?? null;
+    this.selectedLearner.set(learner);
+    this.syncResultsFormToTerm();
   }
 
-  protected loadLearnerResults(learner: LearnerResponseDto) {
-    // Initialize form with existing results or empty results for each class subject
-    // Only initialize if subjects are already loaded
-    if (this.classSubjects().length > 0) {
-      this.initializeResultsForm(learner.results || []);
-    }
-    // If subjects aren't loaded yet, they will initialize the form when they finish loading
+  protected onTermOrYearChange() {
+    const term = this.form.controls['term'].value;
+    const year = this.form.controls['year'].value;
+    this.selectedTerm.set(term);
+    this.selectedYear.set(year);
+    this.syncResultsFormToTerm();
   }
 
-  protected initializeResultsForm(existingResults: SubjectResults[] = []) {
+  protected syncResultsFormToTerm() {
+    const learner = this.selectedLearner();
+    const term = this.selectedTerm();
+    const year = this.selectedYear();
+    const entry = learner?.termResults?.find((e) => e.term === term && e.year === year);
+    const subjects = this.classSubjects();
+    this.initializeResultsForm(entry?.subjects ?? [], subjects);
+  }
+
+  protected initializeResultsForm(
+    existingResults: SubjectResults[] = [],
+    subjects?: SubjectResponseDto[]
+  ) {
+    const subs = subjects ?? this.classSubjects();
     const resultsArray = this.form.get('results') as FormArray;
     resultsArray.clear();
-
-    this.classSubjects().forEach((subject) => {
-      const existingResult = existingResults.find(r => r.name === subject.name);
-      const resultValue = existingResult?.result ?? 0;
-      const feedbackValue = existingResult?.feedback ?? '';
-      
+    subs.forEach((subject) => {
+      const existing = existingResults.find((r) => r.name === subject.name);
       const resultGroup = this.formBuilder.group({
         subjectId: this.formBuilder.control<string>(subject.subjectId),
         name: this.formBuilder.control<string>(subject.name),
-        result: this.formBuilder.control<number>(resultValue),
-        feedback: this.formBuilder.control<string>(feedbackValue),
+        result: this.formBuilder.control<number>(existing?.result ?? 0),
+        feedback: this.formBuilder.control<string>(existing?.feedback ?? ''),
       });
       resultsArray.push(resultGroup);
     });
-    
-    console.log('Form initialized with results:', this.resultsArray.value);
   }
 
   protected clearResultsForm() {
-    const resultsArray = this.form.get('results') as FormArray;
-    resultsArray.clear();
+    (this.form.get('results') as FormArray).clear();
   }
 
   protected get resultsArray(): FormArray {
@@ -179,59 +188,55 @@ export class Results implements OnInit {
     return this.getResultGroup(index).controls['feedback'] as FormControl<string>;
   }
 
-  protected onSubmit(event?: Event) {
-    if (event) {
-      event.preventDefault();
-    }
+  protected saveAsDraft() {
+    this.saveTermResults('draft');
+  }
 
-    if (this.form.invalid || !this.selectedLearner()) {
-      console.warn('Form is invalid or no learner selected');
+  protected publish() {
+    this.saveTermResults('published');
+  }
+
+  private saveTermResults(status: 'draft' | 'published') {
+    const learner = this.selectedLearner();
+    if (!learner || this.form.invalid) return;
+
+    const term = this.form.controls['term'].value;
+    const year = this.form.controls['year'].value;
+    const existing = learner.termResults ?? [];
+    const entry = existing.find((e) => e.term === term && e.year === year);
+    if (entry?.status === 'published') {
       return;
     }
 
-    const studentId = this.selectedLearner()!.studentId;
-    
-    // Get form values directly from the form array
     const formResults = this.resultsArray.value as Array<{
       subjectId: string;
       name: string;
       result: number;
       feedback: string;
     }>;
-    
-    const results: SubjectResults[] = formResults.map(formResult => ({
-      name: formResult.name,
-      result: formResult.result !== null && formResult.result !== undefined ? Number(formResult.result) : 0,
-      feedback: formResult.feedback || '',
+    const subjects: SubjectResults[] = formResults.map((r) => ({
+      name: r.name,
+      result: Number(r.result) ?? 0,
+      feedback: r.feedback ?? '',
     }));
 
-    console.log('Form results array value:', this.resultsArray.value);
-    console.log('Submitting results:', results);
+    const newEntry: TermResultEntry = { term, year, status, subjects };
+    const merged: TermResultEntry[] = existing.filter(
+      (e) => !(e.term === term && e.year === year)
+    );
+    merged.push(newEntry);
+    merged.sort((a, b) => a.year - b.year || a.term - b.term);
 
-    this.apiService.updateLearner(studentId, { results }).subscribe({
-      next: (response) => {
-        console.log('Results updated successfully:', response);
-        // Reload learner data to show updated results
-        const currentStudentId = this.form.controls['studentId'].value;
-        this.apiService.getLearners(currentStudentId).subscribe({
-          next: (learnerResponse) => {
-            if (learnerResponse.data && learnerResponse.data.length > 0) {
-              const updatedLearner = learnerResponse.data[0];
-              this.selectedLearner.set(updatedLearner);
-              this.learners.update(learners => 
-                learners.map(l => l.studentId === updatedLearner.studentId ? updatedLearner : l)
-              );
-              this.initializeResultsForm(updatedLearner.results || []);
-            }
-          },
-          error: (error) => {
-            console.error('Error reloading learner:', error);
-          }
-        });
+    this.apiService.updateLearner(learner.studentId, { termResults: merged }).subscribe({
+      next: () => {
+        const updatedLearner: LearnerResponseDto = { ...learner, termResults: merged };
+        this.selectedLearner.set(updatedLearner);
+        this.learners.update((list) =>
+          list.map((l) => (l.studentId === learner.studentId ? updatedLearner : l))
+        );
+        this.syncResultsFormToTerm();
       },
-      error: (error) => {
-        console.error('Error updating results:', error);
-      }
+      error: (err) => console.error('Failed to save results', err),
     });
   }
 }

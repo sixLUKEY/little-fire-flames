@@ -1,6 +1,5 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+@import './app/common/theme.css';
 
 html,
 body {
@@ -10,4 +9,9 @@ body {
 
 body {
   overflow: hidden;
+  background: var(--lff-surface);
+}
+
+.app-main {
+  background: var(--lff-surface);
 }

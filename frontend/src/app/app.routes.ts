@@ -37,10 +37,6 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'report-centre',
-    loadComponent: () => import('./report-centre/report-centre').then(m => m.ReportCentre),
-  },
-  {
     path: 'parents-corner',
     loadComponent: () => import('./parents-corner/parents-corner').then(m => m.ParentsCorner)
   }

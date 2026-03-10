@@ -1,3 +1,43 @@
-<div class="learner-centre p-4 sm:p-6 h-full">
-  <router-outlet />
+<div class="learner-centre">
+  <nav class="learner-centre-subnav">
+    <a
+      routerLink="/learner-centre/learners"
+      routerLinkActive="subnav-active"
+      [routerLinkActiveOptions]="{ exact: false }"
+      class="subnav-link"
+    >
+      Learners
+    </a>
+    <a
+      routerLink="/learner-centre/classes"
+      routerLinkActive="subnav-active"
+      class="subnav-link"
+    >
+      Classes
+    </a>
+    <a
+      routerLink="/learner-centre/subjects"
+      routerLinkActive="subnav-active"
+      class="subnav-link"
+    >
+      Subjects
+    </a>
+    <a
+      routerLink="/learner-centre/teachers"
+      routerLinkActive="subnav-active"
+      class="subnav-link"
+    >
+      Teachers
+    </a>
+    <a
+      routerLink="/learner-centre/results"
+      routerLinkActive="subnav-active"
+      class="subnav-link"
+    >
+      Results
+    </a>
+  </nav>
+  <div class="learner-centre-content">
+    <router-outlet />
+  </div>
 </div>

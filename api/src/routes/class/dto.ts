@@ -12,7 +12,7 @@ export interface CreateClassDto {
 export interface UpdateClassDto {
   name?: string;
   teacherId?: string;
-  learnerIds?: string[];
+  subjectIds?: string[];
 }
 
 export interface DeleteClassDto {
@@ -28,6 +28,7 @@ export interface ClassResponseDto {
   classId: string;
   name: string;
   teacherId: string;
+  subjectIds: string[];
 }
 
 export interface ClassListResponseDto {

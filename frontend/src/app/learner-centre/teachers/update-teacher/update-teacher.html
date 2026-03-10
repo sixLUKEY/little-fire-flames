@@ -1,17 +1,46 @@
-<dialog #dialogRef>
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <label>
-      name for learner
-      <input formControlName="name" type="text" />
-    </label>
-    <label>
-      subject Id
-      <input formControlName="subjectId" type="text" />
-    </label>
-    <label>
-      classId for learner
-      <input formControlName="classId" type="text" />
-    </label>
-    <button type="submit">submit</button>
+<dialog #dialogRef class="lff-dialog">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+    <h2 class="text-xl font-semibold mb-4">Update Teacher</h2>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium">Select teacher</label>
+      <select
+        formControlName="teacherId"
+        (change)="onTeacherSelected()"
+        class="dialog-select"
+      >
+        <option value="">— Select a teacher —</option>
+        @for (t of teachers(); track t.teacherId) {
+          <option [value]="t.teacherId">{{ t.name }} ({{ t.teacherId }})</option>
+        }
+      </select>
+    </div>
+
+    @if (form.controls['teacherId'].value) {
+      <div class="space-y-4 pt-2 border-t border-[var(--lff-border)]">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Name</label>
+          <input formControlName="name" type="text" class="dialog-input" />
+        </div>
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Description</label>
+          <textarea formControlName="description" rows="3" class="dialog-input"></textarea>
+        </div>
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Class <span class="text-gray-500 font-normal">(optional)</span></label>
+          <select formControlName="classId" class="dialog-select">
+            <option value="">— None —</option>
+            @for (cls of classes(); track cls.classId) {
+              <option [value]="cls.classId">{{ cls.name }} ({{ cls.classId }})</option>
+            }
+          </select>
+        </div>
+      </div>
+    }
+
+    <div class="flex gap-2 justify-end mt-6">
+      <button type="button" (click)="closeDialog()" class="dialog-btn-secondary">Cancel</button>
+      <button type="submit" [disabled]="!form.controls['teacherId'].value" class="dialog-btn-primary">Update</button>
+    </div>
   </form>
 </dialog>

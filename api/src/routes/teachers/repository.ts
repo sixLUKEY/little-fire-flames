@@ -21,7 +21,7 @@ export const getTeachers = async (dto: GetTeacherDto): Promise<Teacher[]> => {
 };
 
 export const createTeacher = async (dto: CreateTeacherDto): Promise<Teacher> => {
-  const { name, description, subjectId } = dto;
+  const { name, description, classId } = dto;
 
   // Generate 8-digit teacher ID
   const generateTeacherId = (): string => {
@@ -31,7 +31,6 @@ export const createTeacher = async (dto: CreateTeacherDto): Promise<Teacher> => 
   };
 
   let teacherId = generateTeacherId();
-  // Ensure uniqueness (simple retry, in production you might want a better approach)
   let existing = await Teacher.findOne({ where: { teacherId } });
   while (existing) {
     teacherId = generateTeacherId();
@@ -39,10 +38,10 @@ export const createTeacher = async (dto: CreateTeacherDto): Promise<Teacher> => 
   }
 
   const newTeacher = await Teacher.create({
-    teacherId: teacherId,
-    name: name,
-    description: description,
-    subjectId: subjectId,
+    teacherId,
+    name,
+    description,
+    classId: classId ?? null,
   });
 
   return newTeacher;
@@ -65,8 +64,8 @@ export const updateTeacher = async (teacherId: string, dto: UpdateTeacherDto): P
   if (dto.description !== undefined) {
     teacherToUpdate.description = dto.description;
   }
-  if (dto.subjectId !== undefined) {
-    teacherToUpdate.subjectId = dto.subjectId;
+  if (dto.classId !== undefined) {
+    teacherToUpdate.classId = dto.classId ?? null;
   }
 
   await teacherToUpdate.save();

@@ -2,17 +2,17 @@
  * Data Transfer Objects for Teacher routes
  */
 
-// Request DTOs
+// Request DTOs — teachers are not assigned classes; classes are assigned teachers. classId is optional.
 export interface CreateTeacherDto {
   name: string;
   description: string;
-  subjectId: string;
+  classId?: string | null;
 }
 
 export interface UpdateTeacherDto {
   name?: string;
   description?: string;
-  subjectId?: string;
+  classId?: string | null;
 }
 
 export interface DeleteTeacherDto {
@@ -28,7 +28,7 @@ export interface TeacherResponseDto {
   teacherId: string;
   name: string;
   description: string;
-  subjectId: string;
+  classId: string | null;
 }
 
 export interface TeacherListResponseDto {

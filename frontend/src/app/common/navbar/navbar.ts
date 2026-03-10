@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'lff-navbar',
@@ -8,4 +8,9 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './navbar.css',
 })
 export class Navbar {
+  protected readonly router = inject(Router);
+
+  protected isTeachersCornerActive(): boolean {
+    return this.router.url.startsWith('/learner-centre');
+  }
 }

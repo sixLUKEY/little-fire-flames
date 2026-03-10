@@ -1,6 +1,10 @@
-<dialog #dialogRef class="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg shadow-xl p-6 w-full max-w-md">
+<dialog #dialogRef class="lff-dialog">
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
     <h2 class="text-xl font-semibold mb-4">Create Subject</h2>
+
+    @if (errorMessage) {
+      <p class="text-sm text-red-600 bg-red-50 p-2 rounded">{{ errorMessage }}</p>
+    }
     
     <div class="space-y-2">
       <label class="block text-sm font-medium">

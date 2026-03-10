@@ -5,6 +5,7 @@ export class Class extends Model {
   declare classId: string;
   declare name: string;
   declare teacherId: string;
+  declare subjectIds: string[];
 }
 
 Class.init(
@@ -22,6 +23,11 @@ Class.init(
     teacherId: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    subjectIds: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: () => [],
     },
   },
   { sequelize, tableName: 'classes' }

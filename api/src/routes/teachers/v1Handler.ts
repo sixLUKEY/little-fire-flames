@@ -17,7 +17,7 @@ export const handleV1Teachers = async (
       teacherId: teacher.teacherId,
       name: teacher.name,
       description: teacher.description,
-      subjectId: teacher.subjectId,
+      classId: teacher.classId ?? null,
     })),
   };
 
@@ -43,7 +43,7 @@ export const handleV1TeacherCreate = async (
     const createDto: CreateTeacherDto = {
       name: options.body.name,
       description: options.body.description,
-      subjectId: options.body.subjectId,
+      classId: options.body.classId ?? undefined,
     };
 
     await createTeacher(createDto);
@@ -91,7 +91,7 @@ export const handleV1TeacherUpdate = async (
     const updateDto: UpdateTeacherDto = {
       name: options.body.name,
       description: options.body.description,
-      subjectId: options.body.subjectId,
+      classId: options.body.classId ?? undefined,
     };
 
     await updateTeacher(teacherId, updateDto);

@@ -18,23 +18,31 @@ export class CreateSubject extends AbstractDialog {
     description: this.formBuilder.control<string>(''),
   });
 
+  protected errorMessage = '';
+
   protected onSubmit() {
+    this.errorMessage = '';
     if (this.form.invalid) {
       return;
     }
 
-    this.apiService.createSubject({
-      name: this.form.controls['name'].value,
-      description: this.form.controls['description'].value,
-    }).subscribe({
+    const name = this.form.controls['name'].value?.trim() ?? '';
+    const description = this.form.controls['description'].value?.trim() ?? '';
+    if (!name || !description) {
+      this.errorMessage = 'Name and description are required.';
+      return;
+    }
+
+    this.apiService.createSubject({ name, description }).subscribe({
       next: (response) => {
         console.log('Subject created successfully:', response);
         this.form.reset();
         this.closeDialog();
       },
-      error: (error) => {
-        console.error('Error creating subject:', error);
-      }
+      error: (err: { error?: { message?: string }; message?: string }) => {
+        console.error('Error creating subject:', err);
+        this.errorMessage = err?.error?.message ?? err?.message ?? 'Failed to create subject.';
+      },
     });
   }
 }

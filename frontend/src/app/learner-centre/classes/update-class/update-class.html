@@ -1,56 +1,56 @@
-<dialog #dialogRef class="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg shadow-xl p-6 w-full max-w-md">
+<dialog #dialogRef class="lff-dialog">
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
     <h2 class="text-xl font-semibold mb-4">Update Class</h2>
-    
-    <div class="space-y-2">
-      <label class="block text-sm font-medium">
-        Class ID
-        <input 
-          formControlName="classId" 
-          type="text" 
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          required
-        />
-      </label>
-    </div>
 
     <div class="space-y-2">
-      <label class="block text-sm font-medium">
-        Name
-        <input 
-          formControlName="name" 
-          type="text" 
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-        />
-      </label>
+      <label class="block text-sm font-medium">Select class</label>
+      <select
+        formControlName="classId"
+        (change)="onClassSelected()"
+        class="dialog-select"
+      >
+        <option value="">— Select a class —</option>
+        @for (c of classes(); track c.classId) {
+          <option [value]="c.classId">{{ c.name }} ({{ c.classId }})</option>
+        }
+      </select>
     </div>
 
-    <div class="space-y-2">
-      <label class="block text-sm font-medium">
-        Teacher ID
-        <input 
-          formControlName="teacherId" 
-          type="text" 
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-        />
-      </label>
-    </div>
+    @if (form.controls['classId'].value) {
+      <div class="space-y-4 pt-2 border-t border-[var(--lff-border)]">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Name</label>
+          <input formControlName="name" type="text" class="dialog-input" />
+        </div>
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Teacher</label>
+          <select formControlName="teacherId" class="dialog-select">
+            <option value="">— Select a teacher —</option>
+            @for (t of teachers(); track t.teacherId) {
+              <option [value]="t.teacherId">{{ t.name }} ({{ t.teacherId }})</option>
+            }
+          </select>
+        </div>
+        @if (subjectIdsArray.length === subjects().length && subjects().length > 0) {
+          <div class="space-y-2">
+            <label class="block text-sm font-medium mb-2">Subjects</label>
+            <div class="border border-[var(--lff-border)] rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+              @for (subject of subjects(); track subject.subjectId; let i = $index) {
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-[var(--lff-surface)] p-2 rounded">
+                  <input type="checkbox" [formControl]="getSubjectControl(i)" class="rounded border-[var(--lff-border)]" />
+                  <span class="text-sm font-medium">{{ subject.name }}</span>
+                  <span class="text-xs text-[var(--lff-ink-muted)]">{{ subject.description }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
 
     <div class="flex gap-2 justify-end mt-6">
-      <button 
-        type="button" 
-        (click)="closeDialog()"
-        class="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
-      >
-        Cancel
-      </button>
-      <button 
-        type="submit" 
-        [disabled]="form.invalid"
-        class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Update
-      </button>
+      <button type="button" (click)="closeDialog()" class="dialog-btn-secondary">Cancel</button>
+      <button type="submit" [disabled]="!form.controls['classId'].value" class="dialog-btn-primary">Update</button>
     </div>
   </form>
 </dialog>

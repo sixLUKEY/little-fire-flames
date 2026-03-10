@@ -21,12 +21,13 @@ export const getClasses = async (dto: GetClassDto): Promise<Class[]> => {
 };
 
 export const createClass = async (dto: CreateClassDto): Promise<Class> => {
-  const { name, teacherId } = dto;
+  const { name, teacherId, subjectIds } = dto;
 
   const newClass = await Class.create({
     classId: uuidv4(),
     name,
     teacherId,
+    subjectIds: Array.isArray(subjectIds) ? subjectIds : [],
   });
 
   return newClass;
@@ -48,6 +49,9 @@ export const updateClass = async (classId: string, dto: UpdateClassDto): Promise
   }
   if (dto.teacherId !== undefined) {
     classToUpdate.teacherId = dto.teacherId;
+  }
+  if (dto.subjectIds !== undefined) {
+    classToUpdate.subjectIds = Array.isArray(dto.subjectIds) ? dto.subjectIds : [];
   }
 
   await classToUpdate.save();

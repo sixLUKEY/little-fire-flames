@@ -1,4 +1,5 @@
 import { HttpMethod, RouteHandler } from '../types';
+import { authRoutes } from './auth/routes';
 import { classRoutes } from './class/routes';
 import { learnerRoutes } from './learners/routes';
 import { subjectRoutes } from './subjects/routes';
@@ -11,8 +12,9 @@ export interface RouteDefinition {
 }
 
 export const routes: RouteDefinition[] = [
+  ...authRoutes,
   ...classRoutes,
-  ...subjectRoutes,
   ...learnerRoutes,
-  ...teacherRoutes
+  ...subjectRoutes,
+  ...teacherRoutes,
 ];

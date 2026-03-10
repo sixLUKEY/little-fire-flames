@@ -1,7 +1,7 @@
 // Re-export all shared types for frontend consumption
 
 import { ClassListResponseDto, ClassResponseDto, CreateClassDto, UpdateClassDto } from '../routes/class/dto';
-import { CreateLearnerDto, LearnerListResponseDto, LearnerResponseDto, SubjectResults, UpdateLearnerDto } from '../routes/learners/dto';
+import { CreateLearnerDto, LearnerListResponseDto, LearnerResponseDto, SubjectResults, TermResultEntry, UpdateLearnerDto } from '../routes/learners/dto';
 import { SubjectListResponseDto, SubjectResponseDto } from '../routes/subjects/dto';
 import { TeacherListResponseDto, TeacherResponseDto } from '../routes/teachers/dto';
 
@@ -11,6 +11,8 @@ export type { HttpMethod, Params, V1RequestOptions, HttpRawResponse } from '../t
 // Re-export DTO types from backend
 export type {
   SubjectResults,
+  TermResultEntry,
+  ResultStatus,
   CreateLearnerDto,
   UpdateLearnerDto,
   DeleteLearnerDto,
@@ -52,12 +54,14 @@ export interface LearnerModel {
   studentId: string;
   classId: string;
   results: SubjectResults[];
+  termResults: TermResultEntry[];
 }
 
 export interface ClassModel {
   classId: string;
   name: string;
   teacherId: string;
+  subjectIds: string[];
 }
 
 export interface SubjectModel {
@@ -70,7 +74,7 @@ export interface TeacherModel {
   teacherId: string;
   name: string;
   description: string;
-  subjectId: string;
+  classId: string | null;
 }
 
 // Legacy request types (aliases for backward compatibility)
