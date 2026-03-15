@@ -1,0 +1,176 @@
+# Little Fire Flames – SAM (Serverless Application Model) deployment
+# Same stack as deploy/cloudformation/template.yaml: frontend (S3/CloudFront), API (API Gateway + Lambda).
+# Deploy: sam build && sam deploy --guided (or pass params). Package API first – see DEPLOY.md.
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Little Fire Flames – Angular frontend (S3/CloudFront), REST API (API Gateway + Lambda)
+
+Parameters:
+  LambdaCodeS3Bucket:
+    Type: String
+    Description: S3 bucket containing the API deployment zip (create zip from api/ with dist + node_modules + package.json)
+  LambdaCodeS3Key:
+    Type: String
+    Default: api.zip
+    Description: S3 key of the API zip (e.g. api.zip)
+
+  DBHost:
+    Type: String
+    Description: Database host (e.g. RDS endpoint)
+  DBUser:
+    Type: String
+    Description: Database username
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Database password
+  DBName:
+    Type: String
+    Default: myapp
+    Description: Database name
+  DBPort:
+    Type: String
+    Default: '5432'
+    Description: Database port
+
+  ApiStageName:
+    Type: String
+    Default: prod
+    Description: API Gateway stage name (used in URL path)
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 30
+    MemorySize: 256
+
+Resources:
+  # --- API: SAM creates API Gateway + proxy and wires Lambda ---
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: little-fire-flames-api
+      Handler: dist/index.handler
+      CodeUri: !Sub 's3://${LambdaCodeS3Bucket}/${LambdaCodeS3Key}'
+      Environment:
+        Variables:
+          ENV: production
+          DB_HOST: !Ref DBHost
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+      Events:
+        ProxyAny:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /{proxy+}
+            Method: ANY
+        RootAny:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /
+            Method: ANY
+
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: little-fire-flames-api
+      StageName: !Ref ApiStageName
+      EndpointConfiguration:
+        Type: REGIONAL
+
+  # --- Frontend: plain CloudFormation (SAM has no built-in static site) ---
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'little-fire-flames-frontend-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  FrontendOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: little-fire-flames-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt FrontendBucket.DomainName
+            OriginAccessControlId: !GetAtt FrontendOriginAccessControl.Id
+            S3OriginConfig: {}
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          DefaultTTL: 0
+          MaxTTL: 86400
+          MinTTL: 0
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+        PriceClass: PriceClass_100
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${FrontendDistribution}'
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway base URL (use as apiUrl in frontend environment.prod.ts)
+    Value: !Sub 'https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${ApiStageName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+  FrontendUrl:
+    Description: CloudFront URL for the frontend
+    Value: !Sub 'https://${FrontendDistribution.DomainName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-FrontendUrl'
+  FrontendBucketName:
+    Description: S3 bucket for frontend (upload ng build output here)
+    Value: !Ref FrontendBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-FrontendBucketName'
+  CloudFrontDistributionId:
+    Description: CloudFront distribution ID (for cache invalidation)
+    Value: !Ref FrontendDistribution
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudFrontDistributionId'

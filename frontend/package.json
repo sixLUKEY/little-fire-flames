@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve -o",
+    "prebuild": "node -e \"const fs=require('fs'); if(!fs.existsSync('public/config.json')){console.warn('\\n⚠  public/config.json missing — production builds need it.\\n   Run: node ../deploy/scripts/fetch-stack-config.js <stack-name>\\n')}\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

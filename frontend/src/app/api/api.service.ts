@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { AppConfigService } from '../core/app-config.service';
 import type {
   // Models
   LearnerModel,
@@ -42,7 +43,11 @@ import type {
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly appConfig = inject(AppConfigService);
+
+  private get baseUrl(): string {
+    return this.appConfig.apiUrl || 'http://localhost:3000';
+  }
 
   // ==================== LEARNERS ====================
   

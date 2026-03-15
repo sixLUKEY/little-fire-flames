@@ -1,0 +1,140 @@
+# Little Fire Flames – AWS SAM backend only
+# API: API Gateway (REST) + Lambda + Cognito. Frontend (S3/CloudFront) is managed separately.
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Little Fire Flames – REST API (API Gateway + Lambda), Cognito, DB via parameters. Frontend is not managed by this stack.
+
+Parameters:
+  # Lambda code (upload api zip to S3 first)
+  LambdaCodeS3Bucket:
+    Type: String
+    Description: S3 bucket name where the API deployment zip is stored
+  LambdaCodeS3Key:
+    Type: String
+    Default: api.zip
+    Description: S3 key of the API deployment zip (e.g. api.zip)
+
+  # Database (existing RDS or external Postgres)
+  DBHost:
+    Type: String
+    Description: Database host (e.g. RDS endpoint)
+  DBUser:
+    Type: String
+    Description: Database username
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Database password
+  DBName:
+    Type: String
+    Default: myapp
+    Description: Database name
+  DBPort:
+    Type: String
+    Default: '5432'
+    Description: Database port
+
+  # Optional: custom domain / stage name
+  ApiStageName:
+    Type: String
+    Default: prod
+    Description: API Gateway stage name (used in URL path)
+
+Conditions:
+  HasCustomBucket: !Not [!Equals [!Ref LambdaCodeS3Bucket, '']]
+
+Resources:
+  # --- Cognito User Pool ---
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: little-fire-flames-users
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: little-fire-flames-client
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+
+  # --- Lambda ---
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: little-fire-flames-api
+      Runtime: nodejs20.x
+      Handler: dist/index.handler
+      CodeUri:
+        Bucket: !Ref LambdaCodeS3Bucket
+        Key: !Ref LambdaCodeS3Key
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          ENV: production
+          DB_HOST: !Ref DBHost
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+          COGNITO_USER_POOL_ID: !Ref UserPool
+          COGNITO_CLIENT_ID: !Ref UserPoolClient
+      Events:
+        ApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /{proxy+}
+            Method: ANY
+
+  # --- API Gateway (REST) with CORS and Cognito Authorizer ---
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: little-fire-flames-api
+      StageName: !Ref ApiStageName
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+            Identity:
+              Header: Authorization
+        # DefaultAuthorizer is not set so routes are public by default.
+        # To protect an endpoint, add to the Function's Api event:
+        #   Auth:
+        #     Authorizer: CognitoAuthorizer
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway URL
+    Value: !Sub 'https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${ApiStageName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+  UserPoolId:
+    Description: Cognito User Pool ID (use in Angular cognito.userPoolId)
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolId'
+  UserPoolClientId:
+    Description: Cognito App Client ID (use in Angular cognito.clientId)
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolClientId'
