@@ -14,7 +14,7 @@
     "clean": "rm -rf dist",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "test:learner": "tsx --env-file=.env src/routes/learners/test-learners",
+    "test:learner": "tsx --env-file-if-exists=.env src/routes/learners/test-learners.ts",
     "test:routes": "tsx src/test-routes.ts",
     "seed:teacher-class": "tsx scripts/seed-teacher-and-class.ts"
   },

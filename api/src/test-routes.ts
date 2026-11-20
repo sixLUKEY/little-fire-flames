@@ -1,97 +1,56 @@
-const BASE_URL = process.env.API_URL || 'http://localhost:3000';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import type { LearnerListResponseDto } from './routes/learners/dto';
 
-async function testRoutes() {
-  const testStudentId = `ROUTE-TEST-${Date.now()}`;
+const collection = `${process.env.API_URL || 'http://localhost:3000'}/v1/learners`;
 
-  console.log('🧪 Testing Learner Routes\n');
-  console.log(`Test Student ID: ${testStudentId}\n`);
-
-  try {
-    // Test 1: Create Learner
-    console.log('📝 Test 1: Creating learner via POST /v1/learners');
-    const createResponse = await fetch(`${BASE_URL}/v1/learners`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        studentId: testStudentId,
-        name: 'Route Test Student',
-        classId: 'TEST-CLASS-001',
-      }),
-    });
-
-    if (createResponse.ok) {
-      console.log(
-        '✅ POST request successful (status:',
-        createResponse.status,
-        ')'
-      );
-    } else {
-      const errorText = await createResponse.text();
-      console.log('❌ POST request failed:', createResponse.status, errorText);
-      throw new Error(`POST failed with status ${createResponse.status}`);
-    }
-
-    // Small delay to ensure DB write completes
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Test 2: Get Learner by ID
-    console.log(
-      `\n🔍 Test 2: Retrieving learner via GET /v1/learners/${testStudentId}`
-    );
-    const getResponse = await fetch(`${BASE_URL}/v1/learners/${testStudentId}`);
-
-    if (getResponse.ok) {
-      const data: any = await getResponse.json();
-      console.log('✅ GET request successful');
-      console.log('📦 Response data:', JSON.stringify(data, null, 2));
-
-      if (data.data && data.data.length > 0) {
-        const learner = data.data[0];
-        if (learner.studentId === testStudentId) {
-          console.log(
-            '\n✅ Test passed! Route create and retrieve working correctly.'
-          );
-          console.log('   Created and found learner:', {
-            studentId: learner.studentId,
-            name: learner.name,
-            classId: learner.classId,
-          });
-        } else {
-          console.log('❌ Student ID mismatch!');
-        }
-      } else {
-        console.log('❌ No learner found in response!');
-      }
-    } else {
-      const errorText = await getResponse.text();
-      console.log('❌ GET request failed:', getResponse.status, errorText);
-      throw new Error(`GET failed with status ${getResponse.status}`);
-    }
-
-    // Test 3: Get All Learners
-    console.log(`\n🔍 Test 3: Retrieving all learners via GET /v1/learners`);
-    const getAllResponse = await fetch(`${BASE_URL}/v1/learners`);
-
-    if (getAllResponse.ok) {
-      const data: any = await getAllResponse.json();
-      console.log('✅ GET all request successful');
-      console.log('📦 Response data:', JSON.stringify(data, null, 2));
-      console.log(`   Found ${data.data?.length || 0} learners`);
-    } else {
-      const errorText = await getAllResponse.text();
-      console.log(
-        '❌ GET all request failed:',
-        getAllResponse.status,
-        errorText
-      );
-      throw new Error(`GET all failed with status ${getAllResponse.status}`);
-    }
-  } catch (error) {
-    console.error('\n❌ Test failed:', error);
-    process.exit(1);
-  }
+async function checkResponse(
+  url: string,
+  options?: RequestInit
+): Promise<Response> {
+  const response = await fetch(url, options);
+  assert.ok(
+    response.ok,
+    `${options?.method ?? 'GET'} ${url} returned ${response.status}`
+  );
+  return response;
 }
 
-testRoutes();
+async function getLearners(url: string) {
+  const response = await checkResponse(url);
+  const body = (await response.json()) as LearnerListResponseDto;
+  assert.ok(Array.isArray(body.data), 'Expected a list of learners');
+  return body.data;
+}
+
+async function testRoutes() {
+  const fixture = {
+    studentId: `ROUTE-TEST-${randomUUID()}`,
+    name: 'Route Test Student',
+    classId: 'TEST-CLASS-001',
+  };
+  const item = `${collection}/${fixture.studentId}`;
+  await checkResponse(collection, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fixture),
+  });
+  try {
+    const found = await getLearners(item);
+    assert.equal(found.length, 1);
+    assert.equal(found[0].studentId, fixture.studentId);
+    assert.equal(found[0].name, fixture.name);
+    assert.equal(found[0].classId, fixture.classId);
+
+    const list = await getLearners(collection);
+    assert.ok(list.some((learner) => learner.studentId === fixture.studentId));
+  } finally {
+    await checkResponse(item, { method: 'DELETE' });
+  }
+  console.log('Learner HTTP smoke check passed.');
+}
+
+testRoutes().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

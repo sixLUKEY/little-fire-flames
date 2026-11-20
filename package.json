@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:api\" \"npm run dev:frontend\"",
-    "dev:api": "cd api && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "install:all": "npm install && cd api && npm install && cd ../frontend && npm install",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev:api": "npm --prefix api run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "install:all": "npm ci && npm --prefix api ci && npm --prefix frontend ci",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,html,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md,html,yml,yaml}\""
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md,html,yml,yaml}\"",
+    "build": "npm --prefix api run build && npm --prefix frontend run build",
+    "test": "npm --prefix frontend test -- --watch=false",
+    "check": "npm run build && npm test"
   },
   "repository": {
     "type": "git",
