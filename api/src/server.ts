@@ -1,11 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { routes } from './routes/routes';
-import { sequelize } from './db';
-import './db/models/learner.model';
-import './db/models/class.model';
-import './db/models/subjects.model';
-import './db/models/teachers.model';
+import { initializeLocalDb } from './db';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -100,12 +96,7 @@ app.get('/debug/routes', (req, res) => {
 // Initialize database and start server
 async function start() {
   try {
-    await sequelize.authenticate();
-    console.log('✅ Database connection established');
-
-    // Sync models (creates tables if they don't exist)
-    await sequelize.sync({ alter: true });
-    console.log('✅ Database models synced');
+    await initializeLocalDb();
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);

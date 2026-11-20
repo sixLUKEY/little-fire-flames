@@ -34,3 +34,14 @@ const config: SequelizeConfig = {
 };
 
 export const sequelize = new Sequelize(config);
+
+// The models register with this connection when their modules load.
+export async function initializeLocalDb(): Promise<Sequelize> {
+  await import('./models/learner.model');
+  await import('./models/class.model');
+  await import('./models/subjects.model');
+  await import('./models/teachers.model');
+  await sequelize.authenticate();
+  await sequelize.sync({ alter: true });
+  return sequelize;
+}

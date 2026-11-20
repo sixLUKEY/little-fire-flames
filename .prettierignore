@@ -46,3 +46,6 @@ coverage/
 
 # Angular specific
 frontend/.angular/
+
+# Generated deployment settings
+frontend/public/config.json
